@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Quién es el Chilango?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Chivo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a cartel de baile norteño. Fluorescent split-fountain paper,
+   heavy black wood type, one narrow column made for a phone passed hand to hand. */
+:root {
+  color-scheme: light;
+  --fluo-yellow: #ffe500;
+  --fluo-orange: #ff8a00;
+  --fluo-pink: #ff2e88;
+  --ink: #15110d;
+  --paper: #fff9e3;
+  --win: #0a8f55;
+  --font-display: "Bowlby One", "Arial Black", Impact, sans-serif;
+  --font-body: "Chivo", "Helvetica Neue", Arial, sans-serif;
+  --hard: 5px 5px 0 var(--ink);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: linear-gradient(172deg, var(--fluo-yellow) 0%, var(--fluo-yellow) 22%, var(--fluo-orange) 60%, var(--fluo-pink) 100%) fixed;
+  background-color: var(--fluo-orange);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.45;
+}
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 18px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+h1, h2, .display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.95;
+  margin: 0;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+h1 { font-size: clamp(38px, 12.5vw, 66px); letter-spacing: -0.01em; line-height: 1.04; }
+h1 .pop { white-space: nowrap; }
+h1 .pop, .pop {
+  color: var(--paper);
+  text-shadow: 4px 4px 0 var(--ink), -1px -1px 0 var(--ink), 1px -1px 0 var(--ink), -1px 1px 0 var(--ink);
+}
+h2 { font-size: clamp(30px, 9.5vw, 44px); }
+p { margin: 0; }
+.kicker {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 13px;
+  border-top: 4px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  padding: 6px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.lead { font-size: 19px; font-weight: 700; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+.panel {
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: var(--hard);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.panel h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.dark { background: var(--ink); color: var(--fluo-yellow); }
+.dark .muted { color: var(--paper); }
+
+button { font: inherit; color: inherit; cursor: pointer; }
+.btn {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: 20px;
+  line-height: 1.1;
+  background: var(--ink);
+  color: var(--fluo-yellow);
+  border: 3px solid var(--ink);
+  padding: 16px 18px;
+  width: 100%;
+  box-shadow: 5px 5px 0 var(--paper);
+  transition: transform .08s, box-shadow .08s;
+}
+.btn:active { transform: translate(4px, 4px); box-shadow: 1px 1px 0 var(--paper); }
+.btn.alt { background: var(--paper); color: var(--ink); box-shadow: var(--hard); }
+.btn.alt:active { box-shadow: 1px 1px 0 var(--ink); }
+.btn.small { font-size: 15px; padding: 10px 12px; width: auto; }
+:focus-visible { outline: 4px solid var(--ink); outline-offset: 3px; }
+.dark :focus-visible, .btn:focus-visible { outline-color: var(--paper); outline-offset: -7px; }
+.btn.alt:focus-visible { outline-color: var(--fluo-pink); }
+
+.player-row { display: flex; gap: 8px; }
+.player-row input {
+  flex: 1; min-width: 0;
+  font: inherit; font-weight: 700;
+  padding: 10px 12px;
+  border: 3px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 0;
+}
+.icon-btn {
+  width: 48px; flex: none;
+  border: 3px solid var(--ink);
+  background: var(--fluo-pink);
+  color: var(--ink);
+  font-weight: 900; font-size: 18px;
+}
+.chip {
+  border: 3px solid var(--ink);
+  background: transparent;
+  padding: 8px 12px;
+  font-weight: 900;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--fluo-yellow); }
+.error { font-weight: 900; background: var(--ink); color: var(--paper); padding: 8px 12px; }
+
+ol.steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+ol.steps li::marker { font-weight: 900; }
+
+.bigname {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(40px, 14vw, 68px);
+  line-height: 0.95;
+  overflow-wrap: anywhere;
+}
+.card {
+  border: 4px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  padding: 22px 18px;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  animation: flip .35s ease-out;
+}
+.card.norte { background: var(--paper); }
+.card.chil { background: var(--ink); color: var(--fluo-yellow); }
+.card .word {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(34px, 11vw, 54px);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+@keyframes flip {
+  from { transform: rotateY(80deg) scale(.9); }
+  to { transform: none; }
+}
+.timer {
+  font-family: var(--font-display);
+  font-size: 64px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pick {
+  border: 3px solid var(--ink);
+  background: var(--paper);
+  padding: 14px 10px;
+  font-weight: 900;
+  font-size: 17px;
+  text-align: left;
+  box-shadow: 4px 4px 0 var(--ink);
+  overflow-wrap: anywhere;
+}
+.pick:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+.stamp {
+  align-self: flex-start;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(38px, 13vw, 64px);
+  line-height: 1;
+  padding: 10px 14px 6px;
+  border: 5px solid currentColor;
+  transform: rotate(-4deg);
+  animation: slam .3s cubic-bezier(.2, 1.6, .4, 1);
+}
+.stamp.bad { color: var(--ink); background: var(--fluo-pink); }
+.stamp.good { color: var(--paper); background: var(--win); border-color: var(--ink); }
+@keyframes slam {
+  from { transform: rotate(-4deg) scale(2.2); opacity: 0; }
+  to { transform: rotate(-4deg) scale(1); opacity: 1; }
+}
+table.scores { width: 100%; border-collapse: collapse; font-weight: 700; }
+table.scores td { padding: 7px 0; border-bottom: 2px solid var(--ink); }
+table.scores tr:last-child td { border-bottom: 0; }
+table.scores td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 900; }
+table.scores .delta { color: var(--win); font-weight: 900; margin-left: 6px; }
+.tag {
+  display: inline-block;
+  background: var(--ink); color: var(--fluo-yellow);
+  font-size: 12px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 3px 8px;
+}
+.dark .tag { background: var(--fluo-yellow); color: var(--ink); }
+.face {
+  --s: 96px;
+  box-sizing: content-box;
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--s); height: var(--s);
+  overflow: hidden;
+  background: #000;
+  border: 3px solid var(--paper);
+  image-rendering: pixelated;
+}
+.face .top, .face .jaw {
+  position: absolute; left: 0; right: 0;
+  background-size: var(--s) var(--s);
+  background-repeat: no-repeat;
+}
+.face .top { top: 0; height: 62%; background-position: top center; }
+.face .jaw { top: 62%; height: 38%; background-position: bottom center; }
+.face .initial {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: calc(var(--s) * .6);
+  line-height: 1;
+  color: var(--ink);
+}
+.face::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+}
+.talking .face .jaw { animation: flap .2s steps(2, jump-none) infinite; }
+.talking .face .initial { animation: bob .2s steps(2, jump-none) infinite; }
+@keyframes flap { to { transform: translateY(calc(var(--s) * .07)); } }
+@keyframes bob { to { transform: translateY(calc(var(--s) * .05)); } }
+
+.comm {
+  background: var(--ink);
+  color: var(--fluo-yellow);
+  border: 3px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--paper);
+  padding: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.comm-body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.comm-name {
+  font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--paper);
+  display: flex; justify-content: space-between; gap: 8px;
+}
+.comm-name .sig { color: var(--fluo-pink); }
+.talking .comm-name .sig { animation: blink .4s steps(2, jump-none) infinite; }
+@keyframes blink { to { opacity: .2; } }
+.comm-text { font-weight: 700; font-size: 17px; line-height: 1.3; min-height: 3.9em; overflow-wrap: anywhere; }
+
+.pic-btn { cursor: pointer; display: block; flex: none; }
+.pic-btn .face { --s: 42px; border-color: var(--ink); }
+.pic-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.pic-btn:focus-within .face { outline: 4px solid var(--fluo-pink); outline-offset: 2px; }
+.pick { display: flex; align-items: center; gap: 10px; }
+.pick .face { --s: 40px; border-color: var(--ink); border-width: 2px; }
+.pick span.nm { min-width: 0; }
+.hint { font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .talking .face .jaw, .talking .face .initial, .talking .comm-name .sig { animation: none; }
+  .card, .stamp { animation: none; }
+  .btn { transition: none; }
+}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+(function () {
+  "use strict";
+
+  var CATS = {
+    comida: { label: "Comida", words: [
+      "Burritos de Villa Ahumada", "Montados", "Discada", "Chile pasado", "Queso menonita",
+      "Queso asadero", "Machaca", "Carne seca", "Chile colorado", "Caldo de oso",
+      "Tortillas de harina", "Rayadas de Parral", "Sotol", "Tesgüino", "Chile con queso",
+      "Burrito de deshebrada", "Torta de colita de pavo", "Empanadas de Santa Rita",
+      "Manzanas de Cuauhtémoc", "Nueces de Delicias", "Frijoles con asadero", "Carne asada",
+      "Chilaca", "Dulces de leche de Parral"
+    ]},
+    lugares: { label: "Lugares", words: [
+      "Barrancas del Cobre", "Creel", "Cascada de Basaseachi", "Dunas de Samalayuca", "Paquimé",
+      "Mata Ortiz", "Parral", "Cuauhtémoc", "Delicias", "Ciudad Juárez", "Ojinaga", "Batopilas",
+      "Divisadero", "Lago de Arareko", "Grutas de Nombre de Dios", "La Catedral",
+      "Quinta Gameros", "El Rejón", "Cerro Coronel", "La Deportiva", "El Periférico de la Juventud",
+      "Cumbres de Majalca", "Presa La Boquilla", "Los campos menonitas", "La casa de Villa",
+      "El Paso", "La Zona del Silencio", "El puente internacional"
+    ]},
+    jerga: { label: "Así hablamos", words: [
+      "Troca", "Ey", "Sí soy", "Bichi", "Soda", "Mueble", "Parquear", "Yonke", "Lonche", "Raite",
+      "Chavalo", "Bato", "Qué curada", "Ocupo", "Feria", "Wachar", "Cheve", "Pisto", "Hielera",
+      "Dompe", "Sacar la vuelta", "Fierro", "Ire", "Biles", "Chamba", "A la bestia"
+    ]},
+    vida: { label: "Cosas de aquí", words: [
+      "El calorón de junio", "La tolvanera", "El aire lavado", "El calentón", "La granizada",
+      "La nevada que nunca cuaja", "La fila del puente", "La carnita asada del domingo",
+      "Botas vaqueras", "La tejana", "El Chepe", "Los Dorados", "La Feria de Santa Rita",
+      "Los menonitas", "Los corredores rarámuris", "El perro chihuahueño", "Pancho Villa",
+      "La División del Norte", "Un corrido", "La polka", "El acordeón", "El rodeo",
+      "Los matachines", "La troca levantada", "El cinto piteado", "Ir de shopping a El Paso",
+      "Los vientos de marzo", "Juan Gabriel"
+    ]}
+  };
+
+  var CASTIGOS = [
+    "Habla como chilango (\"¿qué onda, carnal?\") hasta que acabe la siguiente ronda.",
+    "Termina todas tus frases con \"ey\" durante la siguiente ronda.",
+    "Narra la siguiente ronda como locutor de rodeo.",
+    "Di tres razones por las que Chihuahua es el mejor estado. Sin reírte.",
+    "Canta el coro de un corrido. Si nadie lo reconoce, va otro.",
+    "Te toca servir la siguiente ronda de sodas, o de lo que haya.",
+    "Imita a tu tío explicando cómo se prende el carbón.",
+    "Defiende 30 segundos que el burrito lleva lechuga y arroz.",
+    "Di \"Chihuahua\" con acento chilango cinco veces seguidas.",
+    "Baila 15 segundos de polka. Con música o sin música.",
+    "Da el parte del clima de junio como si fueras del noticiero.",
+    "Dile \"patrón\" o \"patrona\" a quien te ganó hasta la siguiente ronda.",
+    "Pídele perdón al estado grande en voz alta.",
+    "Imita a un perro chihuahueño temblando de coraje.",
+    "Explícanos qué es una quesadilla sin queso. Convéncenos.",
+    "Grita \"¡Ajúa!\" como si te fueran a oír hasta Parral.",
+    "Cuenta cómo te perdiste en el Periférico, aunque no sea cierto.",
+    "Saluda a todos de mano, uno por uno, como en rancho."
+  ];
+
+  var DEFAULT_NAMES = ["El Güero", "La Comadre", "El Primo", "La Tía"];
+  var TALK_SECONDS = 180;
+
+  var S = null;
+  var timerId = null;
+  var app = document.getElementById("app");
+
+  function fresh() {
+    return {
+      screen: "home",
+      players: DEFAULT_NAMES.map(function (n) { return { name: n, score: 0, pic: "" }; }),
+      mute: false,
+      typed: "",
+      cats: { comida: true, lugares: true, jerga: true, vida: true },
+      nChil: 1,
+      used: [],
+      usedCastigos: [],
+      roundNo: 0,
+      round: null,
+      error: ""
+    };
+  }
+
+  function loadSaved() {
+    try {
+      var raw = localStorage.getItem("chilango-setup");
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (Array.isArray(d.names) && d.names.length) {
+        S.players = d.names.slice(0, 12).map(function (n, i) {
+          var pic = d.pics && typeof d.pics[i] === "string" && d.pics[i].indexOf("data:image/") === 0 ? d.pics[i] : "";
+          return { name: String(n).slice(0, 18), score: 0, pic: pic };
+        });
+      }
+      if (d.cats) Object.keys(CATS).forEach(function (k) { S.cats[k] = d.cats[k] !== false; });
+      if (d.nChil === 2) S.nChil = 2;
+      S.mute = !!d.mute;
+    } catch (e) { /* storage is optional */ }
+  }
+  function saveSetup() {
+    try {
+      localStorage.setItem("chilango-setup", JSON.stringify({
+        names: S.players.map(function (p) { return p.name; }),
+        pics: S.players.map(function (p) { return p.pic || ""; }),
+        cats: S.cats, nChil: S.nChil, mute: S.mute
+      }));
+    } catch (e) { /* storage is optional */ }
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function rnd(n) { return Math.floor(Math.random() * n); }
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = rnd(i + 1); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function names(idxs) {
+    var n = idxs.map(function (i) { return S.players[i].name; });
+    if (n.length < 2) return n.join("");
+    return n.slice(0, -1).join(", ") + " y " + n[n.length - 1];
+  }
+  function fmt(sec) {
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  /* ---------- portraits and transmissions ---------- */
+
+  var FACE_COLORS = ["#ffe500", "#ff2e88", "#fff9e3", "#ff8a00", "#3ddc97", "#7cc6ff"];
+
+  function face(i) {
+    var p = S.players[i] || { name: "?", pic: "" };
+    var pic = p.pic && p.pic.indexOf("data:image/") === 0 && !/['")\\]/.test(p.pic) ? p.pic : "";
+    if (pic) {
+      var bg = "background-image:url('" + pic + "')";
+      return '<span class="face"><span class="top" style="' + bg + '"></span><span class="jaw" style="' + bg + '"></span></span>';
+    }
+    var letter = (p.name.trim().replace(/^(El|La|Los|Las)\s+/i, "")[0] || "?").toUpperCase();
+    return '<span class="face"><span class="initial" style="background:' + FACE_COLORS[i % FACE_COLORS.length] + '">' + esc(letter) + "</span></span>";
+  }
+
+  function comm(i, text) {
+    var p = S.players[i];
+    return '<div class="comm" data-voice="' + i + '">' + face(i) +
+      '<div class="comm-body"><div class="comm-name"><span>' + esc(p.name || "Sin nombre") + '</span><span class="sig" aria-hidden="true">● EN VIVO</span></div>' +
+      '<div class="comm-text" data-say="' + esc(text) + '">' + esc(text) + "</div></div></div>";
+  }
+
+  function line(list) { return list[S.round.seed % list.length]; }
+
+  var audioCtx = null;
+  function ensureAudio() {
+    if (audioCtx || S.mute) return;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    } catch (e) { audioCtx = null; }
+  }
+  function blip(voice) {
+    if (!audioCtx || S.mute) return;
+    try {
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      var t = audioCtx.currentTime;
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = "square";
+      o.frequency.value = 170 + (voice % 6) * 55 + Math.random() * 140;
+      g.gain.setValueAtTime(0.045, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t + 0.06);
+    } catch (e) { /* sound is optional */ }
+  }
+
+  var typeId = null;
+  function stopTyping() { if (typeId) { clearInterval(typeId); typeId = null; } }
+  function startTyping() {
+    stopTyping();
+    var el = app.querySelector(".comm-text[data-say]");
+    if (!el) { S.typed = ""; return; }
+    var text = el.getAttribute("data-say");
+    var box = el.closest(".comm");
+    var key = S.screen + "|" + box.dataset.voice + "|" + text;
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (key === S.typed || still) { S.typed = key; return; }
+    S.typed = key;
+    var voice = +box.dataset.voice, n = 0;
+    el.textContent = "";
+    box.classList.add("talking");
+    typeId = setInterval(function () {
+      n += 1;
+      el.textContent = text.slice(0, n);
+      if (n % 2 === 0 && text[n - 1] !== " ") blip(voice);
+      if (n >= text.length) { stopTyping(); box.classList.remove("talking"); }
+    }, 32);
+  }
+
+  function loadPhoto(file, idx) {
+    if (!file || !/^image\//.test(file.type)) return;
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var N = 64, c = document.createElement("canvas");
+        c.width = N; c.height = N;
+        var g = c.getContext("2d");
+        var side = Math.min(img.naturalWidth, img.naturalHeight);
+        var sx = (img.naturalWidth - side) / 2;
+        var sy = Math.max(0, (img.naturalHeight - side) * 0.3);
+        g.imageSmoothingQuality = "high";
+        g.drawImage(img, sx, sy, side, side, 0, 0, N, N);
+        var d = g.getImageData(0, 0, N, N), a = d.data, step = 255 / 5;
+        for (var k = 0; k < a.length; k += 4) {
+          for (var ch = 0; ch < 3; ch++) {
+            var v = (a[k + ch] - 128) * 1.15 + 128;
+            a[k + ch] = Math.max(0, Math.min(255, Math.round(v / step) * step));
+          }
+          a[k + 3] = 255;
+        }
+        g.putImageData(d, 0, 0);
+        if (S.players[idx]) { S.players[idx].pic = c.toDataURL("image/png"); S.typed = ""; saveSetup(); render(); }
+      } catch (e) { S.error = "No pude leer esa foto. Prueba con otra."; render(); }
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); S.error = "No pude leer esa foto. Prueba con otra."; render(); };
+    img.src = url;
+  }
+
+  /* ---------- game logic ---------- */
+
+  function startRound() {
+    var clean = S.players
+      .map(function (p) { return { name: p.name.trim(), score: p.score, pic: p.pic || "" }; })
+      .filter(function (p) { return p.name; });
+    if (clean.length < 3) { S.error = "Ocupan ser mínimo 3. Agrega más raza."; return render(); }
+    var activeCats = Object.keys(CATS).filter(function (k) { return S.cats[k]; });
+    if (!activeCats.length) { S.error = "Escoge al menos un tema."; return render(); }
+    S.players = clean;
+    S.error = "";
+    if (S.players.length < 6) S.nChil = 1;
+    saveSetup();
+
+    var pool = [];
+    activeCats.forEach(function (k) {
+      CATS[k].words.forEach(function (w) { if (S.used.indexOf(w) < 0) pool.push({ cat: k, word: w }); });
+    });
+    if (!pool.length) {
+      S.used = [];
+      activeCats.forEach(function (k) { CATS[k].words.forEach(function (w) { pool.push({ cat: k, word: w }); }); });
+    }
+    var pick = pool[rnd(pool.length)];
+    S.used.push(pick.word);
+
+    var order = shuffle(S.players.map(function (_, i) { return i; }));
+    var decoys = shuffle(CATS[pick.cat].words.filter(function (w) { return w !== pick.word; })).slice(0, 7);
+    S.roundNo += 1;
+    S.round = {
+      cat: pick.cat,
+      word: pick.word,
+      chil: order.slice(0, S.nChil),
+      starter: rnd(S.players.length),
+      seed: rnd(1000),
+      i: 0,
+      accused: -1,
+      revealed: false,
+      options: shuffle(decoys.concat([pick.word])),
+      outcome: "",
+      guess: "",
+      castigo: "",
+      deltas: [],
+      timeLeft: TALK_SECONDS,
+      running: false
+    };
+    S.screen = "pass";
+    render();
+  }
+
+  function finish(outcome, guess) {
+    var r = S.round;
+    r.outcome = outcome;
+    r.guess = guess || "";
+    r.deltas = S.players.map(function (_, i) {
+      var isChil = r.chil.indexOf(i) >= 0;
+      if (outcome === "escape") return isChil ? 3 : 0;
+      if (outcome === "steal") return isChil ? 2 : 0;
+      return isChil ? 0 : 1;
+    });
+    r.deltas.forEach(function (d, i) { S.players[i].score += d; });
+    var left = CASTIGOS.filter(function (c) { return S.usedCastigos.indexOf(c) < 0; });
+    if (!left.length) { S.usedCastigos = []; left = CASTIGOS; }
+    r.castigo = left[rnd(left.length)];
+    S.usedCastigos.push(r.castigo);
+    S.screen = "result";
+    render();
+  }
+
+  /* ---------- screens ---------- */
+
+  function kicker(right) {
+    return '<div class="kicker"><span>¿Quién es el Chilango?</span><span>' + esc(right) + "</span></div>";
+  }
+
+  function viewHome() {
+    var canTwo = S.players.length >= 6;
+    var hasScores = S.players.some(function (p) { return p.score > 0; });
+    var h = "";
+    h += '<div class="kicker"><span>Juego de carnita asada</span><span>3 a 12 jugadores</span></div>';
+    h += '<h1>¿Quién es el <span class="pop">Chilango?</span></h1>';
+    h += '<p class="lead">Todos ven la misma palabra bien de Chihuahua. Menos uno, que anda de colado y tiene que hacerse el norteño.</p>';
+
+h += comm(0, "Aquí transmitiendo desde la carnita asada. Hay un colado entre nosotros. Cambio.");
+
+    h += '<section class="panel"><h3>La raza</h3><p class="hint">Toca el cuadrito para poner tu cara. Sale en las transmisiones.</p><div class="stack">';
+    S.players.forEach(function (p, i) {
+      h += '<div class="player-row"><label class="pic-btn" title="Poner foto">' + face(i) + '<input type="file" accept="image/*" id="pic-' + i + '" data-pic="' + i + '" aria-label="Foto del jugador ' + (i + 1) + '"></label><input id="p-' + i + '" data-idx="' + i + '" maxlength="18" autocomplete="off" aria-label="Nombre del jugador ' + (i + 1) + '" value="' + esc(p.name) + '">';
+      h += '<button class="icon-btn" data-act="del" data-idx="' + i + '" aria-label="Quitar a ' + esc(p.name || "jugador") + '">✕</button></div>';
+    });
+    h += "</div>";
+    if (S.players.length < 12) h += '<button class="btn alt small" data-act="add">+ Agregar jugador</button>';
+    h += "</section>";
+
+    h += '<section class="panel"><h3>Temas</h3><div class="row">';
+    Object.keys(CATS).forEach(function (k) {
+      h += '<button class="chip" data-act="cat" data-cat="' + k + '" aria-pressed="' + (S.cats[k] ? "true" : "false") + '">' + CATS[k].label + "</button>";
+    });
+    h += '</div><h3>Chilangos colados</h3><div class="row">';
+    h += '<button class="chip" data-act="nchil" data-n="1" aria-pressed="' + (S.nChil === 1 || !canTwo) + '">Uno</button>';
+    if (canTwo) h += '<button class="chip" data-act="nchil" data-n="2" aria-pressed="' + (S.nChil === 2) + '">Dos</button>';
+    else h += "<span>Con 6 o más pueden ser dos.</span>";
+    h += "</div></section>";
+
+    if (S.error) h += '<p class="error" role="alert">' + esc(S.error) + "</p>";
+    h += '<button class="btn" data-act="start">Fierro, a jugar</button>';
+    h += '<div class="row"><button class="btn alt small" data-act="mute">Sonido: ' + (S.mute ? "apagado" : "prendido") + "</button>";
+    if (hasScores) h += '<button class="btn alt small" data-act="reset">Borrar puntos</button>';
+    h += "</div>";
+
+    h += '<section class="panel dark"><h3>Cómo se juega</h3><ol class="steps">';
+    h += "<li>Pasen el cel. Cada quien ve su carta a escondidas.</li>";
+    h += "<li>Por turnos, digan una sola palabra que tenga que ver con la palabra secreta. Den dos vueltas.</li>";
+    h += "<li>El chilango no sabe la palabra. Nomás el tema. Tiene que inventar sin que se note.</li>";
+    h += "<li>A la de tres, todos apuntan al sospechoso.</li>";
+    h += "<li>Si lo cachan, todavía puede robarse la ronda adivinando la palabra.</li>";
+    h += "<li>El que pierde paga castigo.</li>";
+    h += "</ol></section>";
+    return h;
+  }
+
+  function viewPass() {
+    var r = S.round, p = S.players[r.i];
+    var h = kicker("Ronda " + S.roundNo + " · " + (r.i + 1) + " de " + S.players.length);
+    h += "<p class=\"lead\">Pásale el cel a</p>";
+    h += '<div class="bigname">' + esc(p.name) + "</div>";
+    h += comm(r.i, line(["Me toca. Los demás, volteen para otro lado.", "Ire, me toca a mí. Sin wachar.", "Pásenmelo. Y no anden de mirones."]));
+    h += '<button class="btn" data-act="show">Soy ' + esc(p.name) + ", ver mi carta</button>";
+    return h;
+  }
+
+  function viewCard() {
+    var r = S.round, p = S.players[r.i];
+    var isChil = r.chil.indexOf(r.i) >= 0;
+    var h = kicker(p.name);
+    if (isChil) {
+      h += '<div class="card chil"><span class="tag">Tema: ' + CATS[r.cat].label + "</span>";
+      h += '<div class="word">Eres el chilango</div>';
+      h += "<p>No sabes la palabra. Escucha a los demás, di algo que suene de aquí y no te dejes cachar.</p></div>";
+    } else {
+      h += '<div class="card norte"><span class="tag">Tema: ' + CATS[r.cat].label + "</span>";
+      h += '<div class="word">' + esc(r.word) + "</div>";
+      h += "<p>Eres bien norteño. Da pistas, pero no tan obvias, porque el chilango anda parando oreja.</p></div>";
+    }
+    h += '<button class="btn" data-act="hide">Ya la vi, esconder</button>';
+    return h;
+  }
+
+  function viewTalk() {
+    var r = S.round;
+    var h = kicker("Ronda " + S.roundNo);
+    h += "<h2>A soltar la sopa</h2>";
+    h += comm(r.starter, line(["Empiezo yo. Pónganse truchas.", "Va la mía primero. Aguas con el colado.", "Yo abro. Una palabra y ya, ey."]));
+    h += '<p class="lead">Empieza ' + esc(S.players[r.starter].name) + ". Una palabra por turno, dos vueltas.</p>";
+    h += '<section class="panel"><h3>Tema</h3><div class="display" style="font-size:30px">' + CATS[r.cat].label + "</div>";
+    h += '<h3>Tiempo para alegar</h3><div class="timer" id="timer" aria-live="off">' + fmt(r.timeLeft) + "</div>";
+    h += '<div class="row"><button class="btn alt small" data-act="timer" id="timer-btn">' + (r.running ? "Pausar" : "Echar a andar") + "</button></div></section>";
+    h += '<button class="btn" data-act="vote">Ya estuvo, a votar</button>';
+    return h;
+  }
+
+  function viewVote() {
+    var h = kicker("Votación");
+    h += "<h2>A la de tres, apunten</h2>";
+    h += '<p class="lead">Uno, dos, tres. Toquen aquí al que más dedos se llevó. Si hay empate, alegan y votan otra vez.</p>';
+    h += '<div class="grid2">';
+    S.players.forEach(function (p, i) {
+      h += '<button class="pick" data-act="accuse" data-idx="' + i + '">' + face(i) + '<span class="nm">' + esc(p.name) + "</span></button>";
+    });
+    h += "</div>";
+    return h;
+  }
+
+  function viewReveal() {
+    var r = S.round, p = S.players[r.accused];
+    var caught = r.chil.indexOf(r.accused) >= 0;
+    var h = kicker("El veredicto");
+    h += '<p class="lead">La raza dice que el colado es</p>';
+    h += '<div class="bigname">' + esc(p.name) + "</div>";
+    if (!r.revealed) {
+      h += comm(r.accused, line(["¿Yo? Si soy más norteño que el asadero.", "No se vale. Yo hasta desayuno burritos.", "Wachen bien, yo no fui. Lo juro por mi troca.", "Están mal. Yo nací con la tejana puesta."]));
+      h += '<button class="btn" data-act="reveal">Destapar</button>';
+    } else if (caught) {
+      h += '<div class="stamp bad">¡Chilango!</div>';
+      h += comm(r.accused, line(["Chale, carnal. Me cacharon.", "Órale, sí soy. Pero todavía no acaba esto.", "No manches. ¿Qué me delató?"]));
+      h += '<p class="lead">Lo cacharon. Pero todavía tiene una chanza: si adivina la palabra, se roba la ronda.</p>';
+      h += '<button class="btn" data-act="toguess">Pásenle el cel a ' + esc(p.name) + "</button>";
+    } else {
+      h += '<div class="stamp good">Bien norteño</div>';
+      h += comm(r.accused, line(["Les dije, bola de desconfiados.", "Ey. A la otra wachen mejor.", "Yo se los dije. Ahora aguántense."]));
+      h += '<p class="lead">Se equivocaron gacho. El colado era ' + esc(names(r.chil)) + ".</p>";
+      h += '<button class="btn" data-act="escape">Ver cómo quedó</button>';
+    }
+    return h;
+  }
+
+  function viewGuess() {
+    var r = S.round;
+    var h = kicker("Última chanza");
+    h += "<h2>¿Cuál era la palabra?</h2>";
+    h += comm(r.accused, line(["A ver, a ver. Déjenme pensar.", "Yo creo que ya sé cuál es, carnales.", "Aguanten. Esta me la sé."]));
+    h += '<p class="lead">' + esc(S.players[r.accused].name) + ", escoge una. Nadie le sople.</p>";
+    h += '<div class="grid2">';
+    r.options.forEach(function (w, i) {
+      h += '<button class="pick" data-act="guess" data-idx="' + i + '">' + esc(w) + "</button>";
+    });
+    h += "</div>";
+    return h;
+  }
+
+  function viewResult() {
+    var r = S.round;
+    var chilNames = names(r.chil);
+    var plural = r.chil.length > 1;
+    var h = kicker("Ronda " + S.roundNo);
+    var who;
+    if (r.outcome === "escape") {
+      h += "<h2>" + (plural ? "Los chilangos se pelaron" : "El chilango se peló") + "</h2>";
+      h += '<p class="lead">' + esc(chilNames) + (plural ? " los engañaron" : " los engañó") + " a todos. 3 puntos.</p>";
+      who = esc(chilNames) + (plural ? " escogen" : " escoge") + " a un norteño para que pague:";
+    } else if (r.outcome === "steal") {
+      h += "<h2>Se robó la ronda</h2>";
+      h += '<p class="lead">Lo cacharon, pero adivinó la palabra. 2 puntos para ' + esc(chilNames) + ".</p>";
+      who = esc(chilNames) + (plural ? " escogen" : " escoge") + " a un norteño para que pague:";
+    } else {
+      h += "<h2>Ganó el norte</h2>";
+      h += '<p class="lead">Lo cacharon y dijo "' + esc(r.guess) + '". Nada que ver. 1 punto para cada norteño.</p>';
+      who = "Paga " + esc(chilNames) + ":";
+    }
+    var norte = S.players.map(function (_, i) { return i; }).filter(function (i) { return r.chil.indexOf(i) < 0; });
+    if (r.outcome === "escape") h += comm(r.chil[0], line(["¡Se la creyeron! Nos vemos en el Metro, carnales.", "Qué fácil. Ya hasta me dieron ganas de quedarme a vivir.", "Ni cuenta se dieron. Pásenme un burrito."]));
+    else if (r.outcome === "steal") h += comm(r.chil[0], line(["Me cacharon, pero la palabra sí me la sabía.", "Colado, pero bien estudiado, carnales.", "Ni modo. Me llevo la ronda de todos modos."]));
+    else h += comm(norte[r.seed % norte.length], line(["Regrésate por donde viniste. Ey.", "Aquí no hay quesadillas sin queso, compa.", "Se le notaba desde que dijo la primera palabra."]));
+    h += '<section class="panel"><h3>La palabra era</h3><div class="display" style="font-size:30px">' + esc(r.word) + "</div></section>";
+    h += '<section class="panel dark"><h3>Castigo</h3><p class="muted">' + who + '</p><p class="lead">' + esc(r.castigo) + "</p></section>";
+
+    var rows = S.players.map(function (p, i) { return { name: p.name, score: p.score, d: r.deltas[i] }; })
+      .sort(function (a, b) { return b.score - a.score; });
+    h += '<section class="panel"><h3>Marcador</h3><table class="scores"><tbody>';
+    rows.forEach(function (x) {
+      h += "<tr><td>" + esc(x.name) + "</td><td>" + x.score + (x.d ? '<span class="delta">+' + x.d + "</span>" : "") + "</td></tr>";
+    });
+    h += "</tbody></table></section>";
+    h += '<button class="btn" data-act="again">Otra ronda</button>';
+    h += '<button class="btn alt" data-act="home">Cambiar la raza</button>';
+    return h;
+  }
+
+  var VIEWS = { home: viewHome, pass: viewPass, card: viewCard, talk: viewTalk, vote: viewVote, reveal: viewReveal, guess: viewGuess, result: viewResult };
+
+  function render() {
+    if (S.screen !== "talk") stopTimer();
+    app.innerHTML = (VIEWS[S.screen] || viewHome)();
+    startTyping();
+    if (S.screen === "talk" && S.round.running && !timerId) runTimer();
+  }
+
+  /* ---------- timer ---------- */
+
+  function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+  function runTimer() {
+    stopTimer();
+    timerId = setInterval(function () {
+      var r = S.round;
+      if (!r || S.screen !== "talk") return stopTimer();
+      r.timeLeft = Math.max(0, r.timeLeft - 1);
+      var el = document.getElementById("timer");
+      if (el) el.textContent = r.timeLeft ? fmt(r.timeLeft) : "¡Ya!";
+      if (!r.timeLeft) { r.running = false; stopTimer(); var b = document.getElementById("timer-btn"); if (b) b.textContent = "Se acabó"; }
+    }, 1000);
+  }
+
+  /* ---------- events ---------- */
+
+  app.addEventListener("input", function (e) {
+    var t = e.target;
+    if (t.matches("input[data-idx]")) { S.players[+t.dataset.idx].name = t.value; saveSetup(); }
+  });
+
+  app.addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.matches("input[data-pic]") && t.files && t.files[0]) loadPhoto(t.files[0], +t.dataset.pic);
+  });
+
+  app.addEventListener("click", function (e) {
+    ensureAudio();
+    var b = e.target.closest("[data-act]");
+    if (!b) return;
+    var act = b.dataset.act, r = S.round, idx = +b.dataset.idx;
+    switch (act) {
+      case "add":
+        S.players.push({ name: "", score: 0, pic: "" }); S.error = ""; render();
+        var inp = document.getElementById("p-" + (S.players.length - 1)); if (inp) inp.focus();
+        break;
+      case "del":
+        S.players.splice(idx, 1); if (S.players.length < 6) S.nChil = 1; saveSetup(); render(); break;
+      case "cat":
+        S.cats[b.dataset.cat] = !S.cats[b.dataset.cat]; S.error = ""; saveSetup(); render(); break;
+      case "nchil":
+        S.nChil = +b.dataset.n; saveSetup(); render(); break;
+      case "mute":
+        S.mute = !S.mute; saveSetup(); render(); break;
+      case "reset":
+        S.players.forEach(function (p) { p.score = 0; }); S.roundNo = 0; render(); break;
+      case "start": case "again":
+        startRound(); window.scrollTo(0, 0); break;
+      case "show":
+        S.screen = "card"; render(); break;
+      case "hide":
+        r.i += 1; S.screen = r.i >= S.players.length ? "talk" : "pass"; render(); break;
+      case "timer":
+        if (!r.timeLeft) break;
+        r.running = !r.running; b.textContent = r.running ? "Pausar" : "Echar a andar";
+        if (r.running) runTimer(); else stopTimer();
+        break;
+      case "vote":
+        r.running = false; S.screen = "vote"; render(); window.scrollTo(0, 0); break;
+      case "accuse":
+        r.accused = idx; r.revealed = false; S.screen = "reveal"; render(); window.scrollTo(0, 0); break;
+      case "reveal":
+        r.revealed = true; render(); break;
+      case "toguess":
+        S.screen = "guess"; render(); window.scrollTo(0, 0); break;
+      case "guess":
+        var w = r.options[idx]; finish(w === r.word ? "steal" : "caught", w); window.scrollTo(0, 0); break;
+      case "escape":
+        finish("escape"); window.scrollTo(0, 0); break;
+      case "home":
+        S.screen = "home"; S.round = null; render(); window.scrollTo(0, 0); break;
+    }
+  });
+
+  /* ---------- boot ---------- */
+
+  function start(saved) {
+    if (saved && saved.screen && Array.isArray(saved.players)) {
+      S = saved; S.typed = "";
+    } else {
+      S = fresh();
+      loadSaved();
+    }
+    render();
+  }
+  var hot = window.claude && window.claude.hot;
+  if (hot && hot.snapshot) hot.snapshot(function () { return S; });
+  if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
+})();
+</script>
+</body>
+</html>
