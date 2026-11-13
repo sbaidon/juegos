@@ -9,7 +9,7 @@ Little web games to play with friends. Plain HTML, CSS and JavaScript. No build 
 
 ## Hosting
 
-Served with GitHub Pages straight from the repo root. `index.html` at the root is the landing page.
+Every push to `main` is deployed to GitHub Pages by `.github/workflows/deploy.yml`. In the repo settings, Pages must have its source set to **GitHub Actions**. `index.html` at the root is the landing page.
 
 ## How Madrazos goes online
 
