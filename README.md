@@ -9,7 +9,9 @@ Little web games to play with friends. Plain HTML, CSS and JavaScript. No build 
 
 ## Hosting
 
-Every push to `main` is deployed to GitHub Pages by `.github/workflows/deploy.yml`. In the repo settings, Pages must have its source set to **GitHub Actions**. `index.html` at the root is the landing page.
+Live at https://sbaidon.github.io/juegos/
+
+GitHub Pages serves the `gh-pages` branch. Every push to `main` is copied onto it by `.github/workflows/deploy.yml`, so only ever edit `main`. `index.html` at the root is the landing page.
 
 ## How Madrazos goes online
 
