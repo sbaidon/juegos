@@ -140,7 +140,7 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
   var CHARS = [
     { id: "juarez", name: "Benito Juárez", short: "Juárez", speed: 1, weight: 1.05, reach: 1.05,
       sp: ["Constitución del 57", "Carruaje de la República", "Derecho ajeno"], ult: "Leyes de Reforma",
-      skin: "#8a5a3c", coat: "#1e1e24", coat2: "#34343e", pants: "#4b4b57", boots: "#101013",
+      skin: "#8a5a3c", coat: "#2b2838", coat2: "#3d3a52", pants: "#4a4860", boots: "#1c1922",
       quotes: ["El respeto al derecho ajeno es la paz.", "Nada con la fuerza, todo con el derecho. Bueno, casi."] },
     { id: "diaz", name: "Porfirio Díaz", short: "Don Porfirio", speed: 0.92, weight: 1.18, reach: 1.1,
       sp: ["Reelección a la carga", "Ferrocarril", "Pan o palo"], ult: "Treinta años en el poder",
@@ -152,7 +152,7 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
       quotes: ["¡Viva Villa!", "Ahí les va la División del Norte."] },
     { id: "hidalgo", name: "Miguel Hidalgo", short: "Hidalgo", speed: 0.98, weight: 1, reach: 1.15,
       sp: ["Grito de Dolores", "Estandarte", "Antorcha"], ult: "Grito de Independencia",
-      skin: "#e0b08a", coat: "#19171c", coat2: "#2d2a33", pants: "#19171c", boots: "#0d0d10",
+      skin: "#e0b08a", coat: "#302a38", coat2: "#453d50", pants: "#302a38", boots: "#1c1922",
       quotes: ["¡Viva México!", "Ya les di el Grito. Ahora va el trancazo."] },
     { id: "sor", name: "Sor Juana", short: "Sor Juana", speed: 1.08, weight: 0.9, reach: 0.92,
       sp: ["Plumas", "Vuelo de versos", "Respuesta"], ult: "Primero Sueño",
@@ -160,7 +160,7 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
       quotes: ["Hombres necios que acusáis...", "Eso te pasa por no leer."] },
     { id: "zapata", name: "Emiliano Zapata", short: "Zapata", speed: 1.02, weight: 1, reach: 1.1,
       sp: ["Sombrerazo", "Machetazo al cielo", "Tierra y libertad"], ult: "Plan de Ayala",
-      skin: "#a86e48", coat: "#131316", coat2: "#26262c", pants: "#131316", boots: "#0b0b0d",
+      skin: "#a86e48", coat: "#28232f", coat2: "#3b3446", pants: "#28232f", boots: "#18151d",
       quotes: ["¡Tierra y libertad!", "La plataforma es de quien la trabaja."] }
   ];
   var SOLO = ["Me caí solito. No digan nada.", "Fue el piso, estaba resbaloso.", "Eso no cuenta, me tropecé."];
@@ -278,8 +278,19 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
 
   /* ---------- drawing: helpers ---------- */
   var INK = "#15110d", FS = 1.25, PI = Math.PI;
+  // Colour helpers: shadows lean cool and purple, lights lean warm, so every palette shades the same way.
+  var TONE = {};
+  function hex(c) { var n = parseInt(c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+  function mix(a, b, k) {
+    var key = a + b + k; if (TONE[key]) return TONE[key];
+    var A = hex(a), B = hex(b), r = "#";
+    for (var i = 0; i < 3; i++) r += ("0" + Math.round(A[i] + (B[i] - A[i]) * k).toString(16)).slice(-2);
+    return (TONE[key] = r);
+  }
+  function shd(c) { return mix(c, "#2a1838", 0.42); }
+  function hil(c) { return mix(c, "#fff2cf", 0.3); }
   function ell(c, x, y, rx, ry, rot) { c.beginPath(); c.ellipse(x, y, rx, ry, rot || 0, 0, PI * 2); c.fill(); }
-  function oell(c, x, y, rx, ry, fill, rot) { c.fillStyle = fill; c.beginPath(); c.ellipse(x, y, rx, ry, rot || 0, 0, PI * 2); c.fill(); c.lineWidth = 1.4; c.strokeStyle = INK; c.stroke(); }
+  function oell(c, x, y, rx, ry, fill, rot) { c.fillStyle = fill; c.beginPath(); c.ellipse(x, y, rx, ry, rot || 0, 0, PI * 2); c.fill(); c.lineWidth = 1.5; c.strokeStyle = INK; c.stroke(); }
   function poly(c, a, fill, lw) {
     c.beginPath(); c.moveTo(a[0], a[1]);
     for (var i = 2; i < a.length; i += 2) c.lineTo(a[i], a[i + 1]);
@@ -287,11 +298,39 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
     if (fill) { c.fillStyle = fill; c.fill(); }
     if (lw !== 0) { c.lineWidth = lw || 1.4; c.strokeStyle = INK; c.lineJoin = "round"; c.stroke(); }
   }
+  // A two-segment limb: thick ink outline, flat fill, then a thin warm highlight along its top edge.
   function limb(c, x0, y0, x1, y1, x2, y2, w, col, col2) {
     c.lineCap = "round"; c.lineJoin = "round";
-    c.strokeStyle = INK; c.lineWidth = w + 2.6; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+    c.strokeStyle = INK; c.lineWidth = w + 3.2; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.lineTo(x2, y2); c.stroke();
     c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); if (!col2) c.lineTo(x2, y2); c.stroke();
-    if (col2) { c.strokeStyle = col2; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+    if (col2) { c.strokeStyle = col2; c.lineWidth = w * 0.92; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+    var seg = function (ax, ay, bx, by, cc) {
+      var dx = bx - ax, dy = by - ay, l = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / l, ny = dx / l;
+      if (ny > 0) { nx = -nx; ny = -ny; }
+      var o = w * 0.24;
+      c.strokeStyle = mix(cc, "#fff2cf", 0.2); c.lineWidth = w * 0.2; c.beginPath(); c.moveTo(ax + nx * o + dx * 0.12, ay + ny * o + dy * 0.12); c.lineTo(bx + nx * o - dx * 0.12, by + ny * o - dy * 0.12); c.stroke();
+    };
+    seg(x0, y0, x1, y1, col); seg(x1, y1, x2, y2, col2 || col);
+  }
+  // Mitten fist with a thumb nub, shaded on the side away from the light.
+  function fist(c, x, y, r, col) {
+    oell(c, x, y, r, r, col);
+    c.save(); c.beginPath(); c.arc(x, y, r - 0.6, 0, PI * 2); c.clip();
+    c.fillStyle = shd(col); ell(c, x - r * 0.45, y + r * 0.45, r * 0.9, r * 0.8);
+    c.fillStyle = hil(col); ell(c, x + r * 0.3, y - r * 0.4, r * 0.38, r * 0.3);
+    c.restore();
+    oell(c, x + r * 0.55, y - r * 0.55, r * 0.42, r * 0.36, col, -0.6);
+  }
+  // Chunky boot that tilts with the shin, with a dark sole and a toe shine.
+  function bootShape(c, x, y, a, col) {
+    c.save(); c.translate(x, y); c.rotate(a);
+    c.beginPath(); c.moveTo(-4.2, 1.8); c.lineTo(-4.2, -2.6); c.quadraticCurveTo(-3.6, -4.4, 0.6, -4.3);
+    c.quadraticCurveTo(8.6, -3.6, 8.8, 1.8); c.closePath();
+    c.fillStyle = col; c.fill();
+    c.fillStyle = shd(col); c.fillRect(-4.2, 0.2, 13, 1.6);
+    c.fillStyle = hil(hil(col)); ell(c, 5.2, -2, 1.6, 0.8, 0.3);
+    c.lineWidth = 1.6; c.strokeStyle = INK; c.lineJoin = "round"; c.stroke();
+    c.restore();
   }
   function lerp(a, b, k) { return a + (b - a) * Math.max(0, Math.min(1, k)); }
   function stache(c, x, y, w, h, col) {
@@ -304,7 +343,7 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
   }
 
   /* ---------- drawing: heads (live face + what each prócer wears) ---------- */
-  function drawHead(c, ch, x, y, r, f, img, box, noHat) {
+  function drawHead(c, ch, x, y, r, f, img, box, noHat, ex) {
     var id = ch.id;
     if (box) { c.save(); c.beginPath(); c.rect(box.x, box.y, box.s, box.s); c.clip(); }
     if (box && img) {
@@ -319,31 +358,53 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
       if (id === "hidalgo") { c.fillStyle = "#f4f4f0"; ell(c, x - f * r * 0.75, y + r * 0.15, r * 0.6, r * 0.95); c.lineWidth = 1.2; c.strokeStyle = INK; c.stroke(); }
       c.save();
       c.beginPath(); c.arc(x, y, r, 0, PI * 2); c.clip();
-      if (img) { c.drawImage(img, 18, 12, 60, 60, x - r, y - r, r * 2, r * 2); tint(c, ch, x - r, y - r, r * 2, r * 2); }
-      else {
-        c.fillStyle = ch.skin; c.fillRect(x - r, y - r, r * 2, r * 2);
-        c.fillStyle = "rgba(0,0,0,.14)"; ell(c, x - f * r * 0.7, y + r * 0.2, r * 0.7, r * 1.1);
-        c.fillStyle = "#fff"; ell(c, x + f * r * 0.12, y - r * 0.12, r * 0.19, r * 0.22); ell(c, x + f * r * 0.62, y - r * 0.12, r * 0.17, r * 0.22);
-        c.fillStyle = INK; ell(c, x + f * r * 0.17, y - r * 0.1, r * 0.1, r * 0.13); ell(c, x + f * r * 0.66, y - r * 0.1, r * 0.1, r * 0.13);
-        c.lineWidth = Math.max(1.2, r * 0.13); c.strokeStyle = id === "diaz" || id === "hidalgo" ? "#d8d8d2" : INK; c.lineCap = "round";
-        c.beginPath(); c.moveTo(x - f * r * 0.1, y - r * 0.42); c.lineTo(x + f * r * 0.3, y - r * 0.36); c.moveTo(x + f * r * 0.48, y - r * 0.36); c.lineTo(x + f * r * 0.85, y - r * 0.44); c.stroke();
-        c.strokeStyle = "rgba(0,0,0,.35)"; c.lineWidth = 1; c.beginPath(); c.moveTo(x + f * r * 0.42, y - r * 0.05); c.lineTo(x + f * r * 0.56, y + r * 0.22); c.lineTo(x + f * r * 0.38, y + r * 0.24); c.stroke();
-        c.strokeStyle = INK; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x + f * r * 0.15, y + r * 0.55); c.quadraticCurveTo(x + f * r * 0.4, y + r * 0.66, x + f * r * 0.66, y + r * 0.53); c.stroke();
+      if (img) {
+        c.drawImage(img, 18, 12, 60, 60, x - r, y - r, r * 2, r * 2); tint(c, ch, x - r, y - r, r * 2, r * 2);
+        // soft vignette and a warm rim so the live face sits inside the drawn world
+        var vg = c.createRadialGradient(x + f * r * 0.2, y - r * 0.25, r * 0.45, x, y, r * 1.02);
+        vg.addColorStop(0, "rgba(42,24,56,0)"); vg.addColorStop(1, "rgba(42,24,56,.42)");
+        c.fillStyle = vg; c.fillRect(x - r, y - r, r * 2, r * 2);
+        c.strokeStyle = "rgba(255,242,207,.55)"; c.lineWidth = r * 0.12; c.beginPath(); c.arc(x, y, r * 0.9, -PI * 0.45, PI * 0.05); c.stroke();
+      } else {
+        var sk = ch.skin, fx = function (k) { return x + f * r * k; };
+        c.fillStyle = sk; c.fillRect(x - r, y - r, r * 2, r * 2);
+        c.fillStyle = mix(sk, "#2a1838", 0.26); ell(c, x - f * r * 1.2, y + r * 0.2, r * 0.75, r * 1.3);
+        c.fillStyle = mix(sk, "#2a1838", 0.18); ell(c, x, y + r * 1.05, r * 1.1, r * 0.42);
+        c.fillStyle = hil(sk); ell(c, fx(0.35), y - r * 0.55, r * 0.42, r * 0.22, -0.3 * f);
+        c.fillStyle = "rgba(255,90,90,.28)"; ell(c, fx(0.08), y + r * 0.28, r * 0.2, r * 0.12); ell(c, fx(0.86), y + r * 0.28, r * 0.15, r * 0.12);
+        var ey = y - r * 0.1, e1 = fx(0.2), e2 = fx(0.66), erx = r * 0.17, ery = r * 0.25;
+        if (ex === 1 || ex === 2) {
+          c.strokeStyle = INK; c.lineCap = "round"; c.lineWidth = Math.max(1.1, r * 0.1); c.beginPath();
+          if (ex === 1) { c.moveTo(e1 - erx, ey + r * 0.04); c.quadraticCurveTo(e1, ey + r * 0.14, e1 + erx, ey + r * 0.04); c.moveTo(e2 - erx, ey + r * 0.04); c.quadraticCurveTo(e2, ey + r * 0.14, e2 + erx, ey + r * 0.04); }
+          else [e1, e2].forEach(function (e) { c.moveTo(e - erx, ey - ery * 0.6); c.lineTo(e + erx * 0.2 * f, ey); c.lineTo(e - erx, ey + ery * 0.6); });
+          c.stroke();
+        } else {
+          c.fillStyle = "#fff"; ell(c, e1, ey, erx, ery); ell(c, e2, ey, erx * 0.88, ery);
+          c.fillStyle = "#2a1e1a"; ell(c, e1 + f * r * 0.06, ey + r * 0.03, r * 0.11, r * 0.16); ell(c, e2 + f * r * 0.06, ey + r * 0.03, r * 0.1, r * 0.16);
+          c.fillStyle = "#fff"; ell(c, e1 + f * r * 0.1, ey - r * 0.06, r * 0.045, r * 0.05); ell(c, e2 + f * r * 0.1, ey - r * 0.06, r * 0.04, r * 0.05);
+        }
+        var bt = ex === 3 ? 0.1 : 0;
+        c.lineWidth = Math.max(1.3, r * 0.14); c.strokeStyle = id === "diaz" || id === "hidalgo" ? "#e2e0da" : "#1d1a20"; c.lineCap = "round";
+        c.beginPath(); c.moveTo(fx(0.02), y - r * (0.44 + bt)); c.lineTo(fx(0.34), y - r * (0.4 - bt)); c.moveTo(fx(0.52), y - r * (0.4 - bt)); c.lineTo(fx(0.84), y - r * (0.46 + bt)); c.stroke();
+        c.fillStyle = shd(sk); c.beginPath(); c.moveTo(fx(0.44), y - r * 0.02); c.quadraticCurveTo(fx(0.62), y + r * 0.2, fx(0.4), y + r * 0.24); c.closePath(); c.fill();
+        c.strokeStyle = INK; c.lineWidth = Math.max(1.1, r * 0.09);
+        if (ex === 2 || ex === 3) { c.fillStyle = "#5a1f24"; ell(c, fx(0.42), y + r * 0.6, r * 0.16, r * (ex === 2 ? 0.13 : 0.08)); }
+        else { c.beginPath(); c.moveTo(fx(0.18), y + r * 0.56); c.quadraticCurveTo(fx(0.42), y + r * 0.68, fx(0.66), y + r * 0.52); c.stroke(); }
       }
       c.restore();
-      c.lineWidth = Math.max(1.4, r * 0.12); c.strokeStyle = INK; c.beginPath(); c.arc(x, y, r, 0, PI * 2); c.stroke();
+      c.lineWidth = Math.max(1.6, r * 0.13); c.strokeStyle = INK; c.beginPath(); c.arc(x, y, r, 0, PI * 2); c.stroke();
     }
     var mx = x + (img ? 0 : f * r * 0.38), my = y + r * 0.4;
     var hair = function (col, a1, a2) {
       c.fillStyle = col; c.beginPath(); c.arc(x, y, r * 1.06, PI * a1, PI * a2); c.closePath(); c.fill(); c.lineWidth = 1.2; c.strokeStyle = INK; c.stroke();
     };
     if (id === "juarez") {
-      hair("#111115", 1.06, 1.94);
-      c.fillStyle = "#111115"; c.fillRect(x - r * 1.04, y - r * 0.45, r * 0.24, r * 0.8); c.fillRect(x + r * 0.8, y - r * 0.45, r * 0.24, r * 0.8);
+      hair("#1d1a24", 1.06, 1.94);
+      c.fillStyle = "#1d1a24"; c.fillRect(x - r * 1.04, y - r * 0.45, r * 0.24, r * 0.8); c.fillRect(x + r * 0.8, y - r * 0.45, r * 0.24, r * 0.8);
       c.strokeStyle = "#4a4a55"; c.lineWidth = 1; c.beginPath(); c.moveTo(x + f * r * 0.25, y - r * 1.02); c.quadraticCurveTo(x + f * r * 0.1, y - r * 0.7, x + f * r * 0.4, y - r * 0.5); c.stroke();
     } else if (id === "diaz") {
       c.fillStyle = "#f1f1ee"; ell(c, x - r * 0.98, y - r * 0.1, r * 0.2, r * 0.42); ell(c, x + r * 0.98, y - r * 0.1, r * 0.2, r * 0.42);
-      c.fillStyle = "#121216"; c.beginPath(); c.moveTo(x - r * 1.75, y - r * 0.5);
+      c.fillStyle = "#1f1b29"; c.beginPath(); c.moveTo(x - r * 1.75, y - r * 0.5);
       c.quadraticCurveTo(x - r * 0.9, y - r * 1.9, x, y - r * 2.0); c.quadraticCurveTo(x + r * 0.9, y - r * 1.9, x + r * 1.75, y - r * 0.5);
       c.quadraticCurveTo(x, y - r * 1.0, x - r * 1.75, y - r * 0.5); c.fill(); c.lineWidth = 1.4; c.strokeStyle = INK; c.stroke();
       c.strokeStyle = "#e6b422"; c.lineWidth = Math.max(1.5, r * 0.14); c.beginPath(); c.moveTo(x - r * 1.5, y - r * 0.62); c.quadraticCurveTo(x, y - r * 1.12, x + r * 1.5, y - r * 0.62); c.stroke();
@@ -353,6 +414,7 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
     } else if (id === "villa") {
       oell(c, x, y - r * 0.62, r * 2.05, r * 0.4, "#7a5230");
       c.fillStyle = "#8a5e38"; c.beginPath(); c.moveTo(x - r * 0.85, y - r * 0.7); c.quadraticCurveTo(x - r * 0.8, y - r * 1.75, x, y - r * 1.72); c.quadraticCurveTo(x + r * 0.8, y - r * 1.75, x + r * 0.85, y - r * 0.7); c.closePath(); c.fill(); c.lineWidth = 1.4; c.strokeStyle = INK; c.stroke();
+      c.fillStyle = "rgba(255,242,207,.22)"; ell(c, x + r * 0.35, y - r * 1.35, r * 0.16, r * 0.3, 0.2);
       c.fillStyle = "#4e331c"; c.fillRect(x - r * 0.86, y - r * 0.98, r * 1.72, r * 0.24);
       c.strokeStyle = "rgba(255,255,255,.25)"; c.lineWidth = 1; c.beginPath(); c.ellipse(x, y - r * 0.66, r * 1.85, r * 0.26, 0, PI * 1.1, PI * 1.9); c.stroke();
       stache(c, mx, my, r * 0.62, r * 0.3, "#15110d");
@@ -363,15 +425,16 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
       c.strokeStyle = "#f7f4ea"; c.lineWidth = Math.max(3, r * 0.34); c.beginPath(); c.arc(x, y, r * 0.96, PI * 0.8, PI * 0.2); c.stroke();
       c.strokeStyle = INK; c.lineWidth = 1; c.beginPath(); c.arc(x, y, r * 1.14, PI * 0.82, PI * 0.18); c.stroke();
     } else if (id === "zapata") {
-      if (noHat) hair("#0e0e10", 1.02, 1.98);
+      if (noHat) hair("#221e2a", 1.02, 1.98);
       else {
-        c.fillStyle = "#0e0e10"; c.beginPath(); c.moveTo(x - r * 0.8, y - r * 0.62); c.quadraticCurveTo(x - r * 0.55, y - r * 2.15, x, y - r * 2.2); c.quadraticCurveTo(x + r * 0.55, y - r * 2.15, x + r * 0.8, y - r * 0.62); c.closePath(); c.fill(); c.lineWidth = 1.4; c.strokeStyle = INK; c.stroke();
-        oell(c, x, y - r * 0.6, r * 2.5, r * 0.46, "#0e0e10");
+        c.fillStyle = "#221e2a"; c.beginPath(); c.moveTo(x - r * 0.8, y - r * 0.62); c.quadraticCurveTo(x - r * 0.55, y - r * 2.15, x, y - r * 2.2); c.quadraticCurveTo(x + r * 0.55, y - r * 2.15, x + r * 0.8, y - r * 0.62); c.closePath(); c.fill(); c.lineWidth = 1.4; c.strokeStyle = INK; c.stroke();
+        c.fillStyle = "rgba(255,242,207,.2)"; ell(c, x + r * 0.32, y - r * 1.45, r * 0.16, r * 0.5, 0.15);
+        oell(c, x, y - r * 0.6, r * 2.5, r * 0.46, "#221e2a");
         c.strokeStyle = "#c9c9cf"; c.lineWidth = Math.max(1.2, r * 0.1);
         c.beginPath(); c.ellipse(x, y - r * 0.6, r * 2.3, r * 0.34, 0, PI * 0.05, PI * 0.95); c.stroke();
         c.beginPath(); c.moveTo(x - r * 0.72, y - r * 0.98); c.lineTo(x + r * 0.72, y - r * 0.98); c.stroke();
       }
-      stache(c, mx, my, r * 0.88, r * 0.34, "#0e0e10");
+      stache(c, mx, my, r * 0.88, r * 0.34, "#221e2a");
     }
     if (box) c.restore();
   }
@@ -486,10 +549,28 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
   }
 
   /* ---------- drawing: the fighter ---------- */
+  // Draw-only memory per player slot: when they last landed, so the landing squash also plays for online guests.
+  var ANIM = {};
+  function stretchOf(o, P) {
+    var fr = o.frame || 0, sx = 1, sy = 1, a = o.i != null ? (ANIM[o.i] || (ANIM[o.i] = { g: true, land: -99, f: 0 })) : null;
+    if (a) {
+      if (fr < a.f) a.land = -99;
+      if (o.grounded && !a.g && o.hitstun <= 0) a.land = fr;
+      a.g = o.grounded; a.f = fr;
+    }
+    if (!o.grounded && o.hitstun <= 0 && o.dodge <= 0) { var k = Math.min(0.13, Math.abs(o.vy || 0) * 0.011); sy += k; sx -= k * 0.6; }
+    var lt = a ? fr - a.land : 99;
+    if (lt >= 0 && lt < 9) { var q = Math.sin((1 - lt / 9) * PI * 0.5) * 0.2; sy -= q; sx += q * 0.7; }
+    else if (o.grounded && !o.move && o.hitstun <= 0 && Math.abs(o.vx || 0) < 0.8) { var br = Math.sin(fr * 0.07) * 0.022; sy += br; sx -= br * 0.5; }
+    if (o.charge > 0) { var ch = Math.min(0.12, o.charge / 160); sy -= ch; sx += ch * 0.8; }
+    if (P.sw === 2 || (o.move === "jab2" && P.sw)) { sx += 0.06; sy -= 0.03; }
+    return [sx, sy];
+  }
   function drawFighter(c, o) {
     var ch = o.ch, id = ch.id, P = poseOf(o), fr = o.frame || 0, t = o.mt || 0;
+    var SS = stretchOf(o, P);
     c.save();
-    c.translate(o.x, o.y); c.scale((o.face || 1) * FS, FS);
+    c.translate(o.x, o.y); c.scale((o.face || 1) * FS * SS[0], FS * SS[1]);
     if (P.alpha < 1) c.globalAlpha *= P.alpha;
     // props that sit behind the body
     if (P.prop === "ride") drawHorse(c, 2, 10, 0.8, fr, "#6b4526");
@@ -517,16 +598,16 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
       var kx = hx + Math.sin(a1) * 11, ky = -22 + Math.cos(a1) * 11;
       return [hx, -22 + by * 0.5, kx, ky, kx + Math.sin(a1 - a2) * 11, ky + Math.cos(a1 - a2) * 11];
     };
-    var boot = function (L) { oell(c, L[4] + 2.6, L[5] - 1.6, 5.6, 3, ch.boots); };
+    var boot = function (L, back) { bootShape(c, L[4], L[5] + 0.4, Math.atan2(L[4] - L[2], L[5] - L[3]) * -0.45, back ? shd(ch.boots) : ch.boots); };
     var tall = id === "villa" || id === "diaz" || id === "zapata" || id === "hidalgo";
     var BA = arm(-3, P.ba, 0.8), FA = arm(3, P.a, P.ax), BL = leg(-4, P.b1, P.b2), FL = leg(4, P.f1, P.f2);
     var sleeve = id === "sor" ? "#f4f0e4" : ch.coat;
     // back arm, back leg
-    limb(c, BA[0], BA[1], BA[2], BA[3], BA[4], BA[5], 5.4, id === "sor" ? "#dcd6c6" : ch.coat2);
-    oell(c, BA[4], BA[5], 3.3, 3.3, id === "diaz" ? "#f4f1e6" : ch.skin);
+    limb(c, BA[0], BA[1], BA[2], BA[3], BA[4], BA[5], 5.6, shd(id === "sor" ? "#f4f0e4" : ch.coat2));
+    fist(c, BA[4], BA[5], 3.4, shd(id === "diaz" ? "#f4f1e6" : ch.skin));
     if (id === "sor") { c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(BA[4], BA[5]); c.lineTo(BA[4] - 3, BA[5] - 13); c.stroke(); c.strokeStyle = "#f7f4ea"; c.lineWidth = 1.3; c.stroke(); }
-    limb(c, BL[0], BL[1], BL[2], BL[3], BL[4], BL[5], 6.4, ch.pants, tall ? ch.boots : null); boot(BL);
-    limb(c, FL[0], FL[1], FL[2], FL[3], FL[4], FL[5], 6.4, ch.pants, tall ? ch.boots : null); boot(FL);
+    limb(c, BL[0], BL[1], BL[2], BL[3], BL[4], BL[5], 7, shd(ch.pants), tall ? shd(ch.boots) : null); boot(BL, true);
+    limb(c, FL[0], FL[1], FL[2], FL[3], FL[4], FL[5], 7, ch.pants, tall ? ch.boots : null); boot(FL);
     if (id === "zapata") { c.fillStyle = "#c9c9cf"; [BL, FL].forEach(function (L) { for (var q = 1; q < 4; q++) ell(c, lerp(L[0], L[2], q / 4), lerp(L[1], L[3], q / 4), 0.9, 0.9); }); }
     if (id === "diaz") { c.strokeStyle = "#d22f2f"; c.lineWidth = 1.4; c.beginPath(); c.moveTo(FL[0], FL[1]); c.lineTo(FL[2], FL[3]); c.stroke(); }
     // coat tails and skirts swing against the motion
@@ -537,8 +618,17 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
     }
     if (longCoat) poly(c, [-8, -26 + by, 2, -26 + by, 1 + swing * 0.5, id === "hidalgo" ? -7 : -12, -11 + swing, id === "hidalgo" ? -6 : -11], ch.coat);
     // torso
-    poly(c, [-9, -45 + by, 9, -45 + by, 8, -30 + by, 7, -21 + by, -7, -21 + by, -8, -30 + by], id === "sor" ? "#f4f0e4" : ch.coat);
-    c.fillStyle = "rgba(255,255,255,.07)"; c.fillRect(1, -44 + by, 7, 22);
+    var tc = id === "sor" ? "#f4f0e4" : ch.coat, torso = function () {
+      c.beginPath(); c.moveTo(-8, -46.5 + by); c.quadraticCurveTo(0, -48.5 + by, 8, -46.5 + by);
+      c.quadraticCurveTo(11.5, -45 + by, 10.5, -36 + by); c.quadraticCurveTo(9.5, -26 + by, 7.6, -20.5 + by);
+      c.lineTo(-7.6, -20.5 + by); c.quadraticCurveTo(-9.5, -26 + by, -10.5, -36 + by); c.quadraticCurveTo(-11.5, -45 + by, -8, -46.5 + by); c.closePath();
+    };
+    torso(); c.fillStyle = tc; c.fill();
+    c.save(); c.clip();
+    c.fillStyle = shd(tc); ell(c, -11, -32 + by, 7.5, 18);
+    c.fillStyle = hil(tc); ell(c, 8.5, -40 + by, 2.6, 7, -0.15);
+    c.restore();
+    torso(); c.lineWidth = 1.9; c.strokeStyle = INK; c.lineJoin = "round"; c.stroke();
     var ty = by;
     if (id === "juarez") {
       poly(c, [-1, -45 + ty, 8, -45 + ty, 5, -30 + ty], "#f4f1e6", 1);
@@ -576,18 +666,22 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
       c.fillStyle = "#c63a2f"; c.fillRect(-7.5, -24 + ty, 15, 3);
     }
     // head
-    drawHead(c, ch, 1, -56 + by, 13, 1, o.img, null, o.noHat);
+    var ex = o.hitstun > 0 ? 2 : (P.sw || o.charge > 0 || P.prop) ? 3 : (fr + (o.i || 0) * 53 + 40) % 190 < 7 ? 1 : 0;
+    c.fillStyle = shd(ch.skin); c.fillRect(-2.5, -48 + by, 6, 4);
+    drawHead(c, ch, 1, -60 + by, 15, 1, o.img, null, o.noHat, ex);
     // front arm, weapon, swoosh
     var wa = P.w, hx = FA[4], hy = FA[5];
     if (P.sw) {
       var rad = (P.sw === 2 ? 46 : 38) * ch.reach;
-      c.strokeStyle = P.sw === 2 ? "rgba(255,229,0,.8)" : "rgba(255,249,227,.75)"; c.lineWidth = P.sw === 2 ? 9 : 6; c.lineCap = "round";
-      c.beginPath(); if (P.prop === "rise") c.arc(3, -41, rad, -PI * 0.9, -PI * 0.1); else c.arc(3, -41 + by, rad, wa - 1.3, wa + 0.1); c.stroke();
+      var a0 = P.prop === "rise" ? -PI * 0.9 : wa - 1.4, a1 = P.prop === "rise" ? -PI * 0.1 : wa + 0.15, am = (a0 + a1) / 2, th = P.sw === 2 ? 13 : 9, sy0 = -41 + (P.prop === "rise" ? 0 : by);
+      c.beginPath(); c.arc(3, sy0, rad, a0, a1); c.arc(3 - Math.cos(am) * th, sy0 - Math.sin(am) * th, rad, a1, a0, true); c.closePath();
+      c.fillStyle = P.sw === 2 ? "rgba(255,214,0,.85)" : "rgba(255,249,227,.8)"; c.fill();
+      c.beginPath(); c.arc(3, sy0, rad, a0 + 0.15, a1); c.strokeStyle = "#fff"; c.lineWidth = 2; c.lineCap = "round"; c.stroke();
     }
     drawWeapon(c, id, hx, hy, wa, fr);
-    limb(c, FA[0], FA[1], FA[2], FA[3], FA[4], FA[5], 5.6, sleeve);
+    limb(c, FA[0], FA[1], FA[2], FA[3], FA[4], FA[5], 6, sleeve);
     if (id === "diaz" || id === "zapata") { c.strokeStyle = id === "diaz" ? "#e6b422" : "#c9c9cf"; c.lineWidth = 1.2; c.beginPath(); c.moveTo(lerp(FA[2], FA[4], 0.6), lerp(FA[3], FA[5], 0.6) - 2.6); c.lineTo(lerp(FA[2], FA[4], 0.6), lerp(FA[3], FA[5], 0.6) + 2.6); c.stroke(); }
-    oell(c, hx, hy, 3.6, 3.6, id === "diaz" ? "#f4f1e6" : ch.skin);
+    fist(c, hx, hy, 3.9, id === "diaz" ? "#f4f1e6" : ch.skin);
     // props in front of the body
     if (P.prop === "dash") { c.strokeStyle = "rgba(255,249,227,.7)"; c.lineWidth = 2; for (var dl = 0; dl < 4; dl++) { c.beginPath(); c.moveTo(-22 - dl * 7, -50 + dl * 12); c.lineTo(-44 - dl * 9, -50 + dl * 12); c.stroke(); } }
     if (P.prop === "stance") {
@@ -1284,7 +1378,7 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
       ctx.fillStyle = "#f7f4ea"; ctx.beginPath(); ctx.moveTo(14, 0); ctx.quadraticCurveTo(0, -8, -14, -5); ctx.lineTo(-9, 0); ctx.lineTo(-14, 5); ctx.quadraticCurveTo(0, 8, 14, 0); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.3; ctx.stroke();
       ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(16, 0); ctx.stroke();
     } else if (k === "hat") {
-      ctx.rotate(Math.sin(t * 0.5) * 0.25); oell(ctx, 0, 0, 24, 6, "#0e0e10"); oell(ctx, 0, -5, 9, 7, "#0e0e10");
+      ctx.rotate(Math.sin(t * 0.5) * 0.25); oell(ctx, 0, 0, 24, 6, "#221e2a"); oell(ctx, 0, -5, 9, 7, "#221e2a");
       ctx.strokeStyle = "#c9c9cf"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(0, 0, 21, 4, 0, 0, PI); ctx.stroke();
       ctx.strokeStyle = "rgba(255,249,227,.5)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 28, t * 0.6, t * 0.6 + 1.6); ctx.stroke();
     } else if (k === "dyn") {
@@ -1447,7 +1541,7 @@ ul.keys { margin: 0; padding-left: 20px; display: flex; flex-direction: column; 
       if (p.invuln > 0 && t % 6 < 3) ctx.globalAlpha = 0.45;
       drawFighter(ctx, p);
       ctx.restore();
-      var hatH = p.ch.id === "zapata" ? 132 : p.ch.id === "villa" || p.ch.id === "diaz" ? 122 : 104, ty = p.y - hatH, me = !p.bot && p.slot === app.slot;
+      var hatH = p.ch.id === "zapata" ? 142 : p.ch.id === "villa" || p.ch.id === "diaz" ? 132 : 112, ty = p.y - hatH, me = !p.bot && p.slot === app.slot;
       ctx.fillStyle = PCOL[p.i]; ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.lineJoin = "round";
       ctx.beginPath(); ctx.moveTo(p.x - 8, ty); ctx.lineTo(p.x + 8, ty); ctx.lineTo(p.x, ty + 10); ctx.closePath(); ctx.fill(); ctx.stroke();
       if (me) { ctx.font = font(13); ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.lineWidth = 4; ctx.strokeText("TÚ", p.x, ty - 4); ctx.fillText("TÚ", p.x, ty - 4); }
