@@ -5,7 +5,7 @@ Little web games to play with friends. Plain HTML, CSS and JavaScript. No build 
 ## Games
 
 - `madrazos/` Madrazos Patrios. Online platform fighter for 2 to 4 players with historical Mexican figures. Each player's live webcam becomes the face of their fighter.
-- `tierra/` Tierra Bronca. Hex map building and trading game for 2 to 6 players on one device, with optional computer players. Round events, a moving chupacabras, player powers (oficios), and two expansions: Tierra Grande (bigger map with unexplored edge, up to 6 players) and Los Marcianos (a UFO that attacks big towns). Add `?bots=4&rapido` to the URL to watch computer players play a fast game.
+- `altepetl/` Altépetl. Hex map building and trading game set in early Mesoamerica, for 2 to 6 players on one device, with optional computer players. Round events, a moving Nahual, player powers (oficios), and three optional expansions: El Lago (lake, island and canoes, hidden map edge), Pescadores (fishing and favors) and Señoríos y Jaguares (city goods, city upgrades, jaguar warriors and the New Fire). Add `?bots=4&rapido&lago&pesca&senorios` to the URL to watch computer players play a fast game.
 - `chilango/` ¿Quién es el Chilango? In-person bluffing game for 3 to 12 players on one shared phone.
 
 ## Hosting
