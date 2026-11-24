@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tierra Bronca</title>
+<meta name="description" content="Junta madera, adobe, maíz, ganado y cobre, y arma tu pueblo en el desierto antes que los demás.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Chivo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: the same cartel de baile paper as the other games, with the board
+   sitting on a dark mesa so the hand-drawn tiles pop. */
+:root {
+  color-scheme: light;
+  --fluo-yellow: #ffe500;
+  --fluo-orange: #ff8a00;
+  --fluo-pink: #ff2e88;
+  --ink: #15110d;
+  --paper: #fff9e3;
+  --win: #0a8f55;
+  --font-display: "Bowlby One", "Arial Black", Impact, sans-serif;
+  --font-body: "Chivo", "Helvetica Neue", Arial, sans-serif;
+  --hard: 5px 5px 0 var(--ink);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: linear-gradient(172deg, var(--fluo-yellow) 0%, var(--fluo-yellow) 22%, var(--fluo-orange) 60%, var(--fluo-pink) 100%) fixed;
+  background-color: var(--fluo-orange);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.4;
+}
+.hidden { display: none !important; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+#cover { background: var(--ink); }
+h1, h2, .display { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; margin: 0; line-height: 1; text-wrap: balance; }
+h1 { font-size: clamp(42px, 12vw, 76px); line-height: 1.02; }
+.pop { color: var(--paper); text-shadow: 4px 4px 0 var(--ink), -1px -1px 0 var(--ink), 1px -1px 0 var(--ink), -1px 1px 0 var(--ink); }
+p { margin: 0; }
+.kicker { font-weight: 900; text-transform: uppercase; letter-spacing: 0.12em; font-size: 13px; border-top: 4px solid var(--ink); border-bottom: 2px solid var(--ink); padding: 6px 0; display: flex; justify-content: space-between; gap: 12px; }
+.kicker a { color: inherit; }
+.lead { font-size: 19px; font-weight: 700; }
+.panel { background: var(--paper); border: 3px solid var(--ink); box-shadow: var(--hard); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.panel h3 { margin: 0; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.12em; }
+.dark { background: var(--ink); color: var(--fluo-yellow); box-shadow: 5px 5px 0 var(--paper); }
+.muted { opacity: .75; font-size: 14px; }
+
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+.btn { font-family: var(--font-display); text-transform: uppercase; font-size: 18px; line-height: 1.1; background: var(--ink); color: var(--fluo-yellow); border: 3px solid var(--ink); padding: 12px 14px; box-shadow: 4px 4px 0 var(--paper); transition: transform .08s, box-shadow .08s; }
+.btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--paper); }
+.btn.alt { background: var(--paper); color: var(--ink); box-shadow: var(--hard); }
+.btn.alt:active:not(:disabled) { box-shadow: 1px 1px 0 var(--ink); }
+.btn.hot { background: var(--fluo-pink); color: var(--ink); box-shadow: var(--hard); }
+.btn:disabled { opacity: .4; }
+.btn.wide { width: 100%; }
+:focus-visible { outline: 4px solid var(--fluo-pink); outline-offset: 2px; }
+
+/* Setup screen */
+#setup { max-width: 560px; margin: 0 auto; padding: 20px 18px 48px; display: flex; flex-direction: column; gap: 18px; }
+.prow { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: center; }
+.prow input { min-width: 0; font: inherit; font-weight: 700; padding: 9px 10px; border: 3px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; }
+.prow select { grid-column: 2 / 4; font: inherit; font-weight: 700; padding: 7px 8px; border: 3px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; }
+.swatch { width: 18px; height: 18px; border: 3px solid var(--ink); }
+.toggle { border: 3px solid var(--ink); background: transparent; padding: 7px 10px; font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; min-width: 92px; }
+.toggle[aria-pressed="true"] { background: var(--ink); color: var(--fluo-yellow); }
+.prow + .prow { border-top: 2px dashed var(--ink); padding-top: 10px; }
+.counts { display: flex; gap: 8px; }
+.counts .toggle { flex: 1; min-width: 0; padding: 7px 4px; }
+.exp { border: 3px solid var(--ink); background: #fff; text-align: left; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; box-shadow: 3px 3px 0 var(--ink); }
+.exp b { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; font-size: 17px; }
+.exp span { font-size: 14px; }
+.exp[aria-pressed="true"] { background: var(--fluo-yellow); }
+.exp:disabled { cursor: default; }
+ul.rules { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+ul.rules b { font-weight: 900; }
+.costs { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; font-weight: 700; font-size: 14px; }
+.ico { width: 24px; height: 24px; vertical-align: middle; display: inline-block; }
+
+/* Game screen */
+#game { max-width: 1280px; margin: 0 auto; padding: 12px 14px 32px; display: flex; flex-direction: column; gap: 12px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 16px; align-items: start; }
+@media (max-width: 920px) { .layout { grid-template-columns: 1fr; } }
+.board-wrap { position: relative; background: var(--ink); border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--paper); display: flex; justify-content: center; }
+#board { display: block; touch-action: manipulation; max-width: 100%; }
+.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.turn { display: flex; align-items: center; gap: 10px; }
+.turn .who { flex: 1; min-width: 0; }
+.turn .nm { font-family: var(--font-display); text-transform: uppercase; font-size: 24px; line-height: 1; overflow-wrap: anywhere; }
+.dot { width: 22px; height: 22px; border: 3px solid currentColor; flex: none; border-radius: 50%; }
+.dice { display: flex; gap: 6px; }
+.die { width: 38px; height: 38px; background: var(--paper); border: 3px solid var(--ink); border-radius: 7px; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: 3px; }
+.die i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); place-self: center; visibility: hidden; }
+.die i.on { visibility: visible; }
+.die.roll { animation: shake .45s ease-out; }
+@keyframes shake { 0% { transform: rotate(0) } 25% { transform: rotate(-25deg) translateY(-6px) } 50% { transform: rotate(18deg) } 75% { transform: rotate(-8deg) } 100% { transform: none } }
+.hintline { font-weight: 700; font-size: 15px; background: var(--fluo-yellow); color: var(--ink); border: 3px solid var(--ink); padding: 6px 9px; }
+.event { position: relative; }
+.event .evname { font-family: var(--font-display); text-transform: uppercase; font-size: 22px; line-height: 1.05; color: var(--paper); }
+.event .ovni { font-weight: 900; font-size: 14px; border-top: 2px dashed var(--fluo-yellow); padding-top: 6px; }
+.event .evtag { font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: var(--fluo-pink); }
+.hand { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.res { border: 3px solid var(--ink); background: #fff; display: flex; flex-direction: column; align-items: center; padding: 4px 2px 2px; position: relative; }
+.res img { width: 40px; height: 40px; }
+.res b { font-family: var(--font-display); font-size: 20px; line-height: 1; }
+.res small { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; }
+.res.zero { opacity: .45; }
+.res.bump { animation: bump .5s ease-out; }
+@keyframes bump { 30% { transform: translateY(-6px) scale(1.08); background: var(--fluo-yellow); } }
+.cards { display: flex; flex-direction: column; gap: 6px; }
+.card { border: 3px solid var(--ink); padding: 6px 8px; display: flex; gap: 8px; align-items: center; background: #fff; }
+.card .ct { flex: 1; min-width: 0; }
+.card .ct b { display: block; font-weight: 900; text-transform: uppercase; font-size: 14px; }
+.card .ct span { font-size: 13px; }
+.card .btn { font-size: 13px; padding: 6px 8px; box-shadow: 2px 2px 0 var(--ink); }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.act { border: 3px solid var(--ink); background: #fff; padding: 7px 8px; text-align: left; display: flex; flex-direction: column; gap: 3px; box-shadow: 3px 3px 0 var(--ink); }
+.act b { font-family: var(--font-display); text-transform: uppercase; font-weight: 400; font-size: 16px; line-height: 1; }
+.act .cost { display: flex; gap: 1px; flex-wrap: wrap; min-height: 22px; }
+.act .cost img { width: 22px; height: 22px; }
+.act .cost em { font-style: normal; font-size: 12px; font-weight: 700; }
+.act[aria-pressed="true"] { background: var(--fluo-yellow); }
+.act:disabled { opacity: .38; box-shadow: none; }
+.act:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.act.big { grid-column: 1 / 3; background: var(--ink); color: var(--fluo-yellow); box-shadow: 3px 3px 0 var(--fluo-pink); align-items: center; padding: 11px; }
+.act.big b { font-size: 21px; }
+.plist { display: flex; flex-direction: column; gap: 6px; }
+.pl { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; border: 3px solid var(--ink); padding: 6px 8px; background: #fff; }
+.pl.cur { background: var(--fluo-yellow); }
+.pl .nm { font-weight: 900; overflow-wrap: anywhere; }
+.pl .sub { font-size: 12px; font-weight: 700; opacity: .8; }
+.pl .vp { font-family: var(--font-display); font-size: 26px; line-height: 1; text-align: right; }
+.pl .vp small { font-family: var(--font-body); font-size: 11px; display: block; font-weight: 900; }
+.badge { display: inline-block; background: var(--ink); color: var(--fluo-yellow); font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; padding: 1px 5px; margin-right: 3px; }
+.log { max-height: 190px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+.log div { border-bottom: 1px dashed rgba(21,17,13,.3); padding-bottom: 2px; }
+.topbar { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+.topbar h2 { font-size: clamp(26px, 5vw, 38px); }
+.topbar .btn { font-size: 14px; padding: 8px 10px; }
+.toast { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); background: var(--paper); color: var(--ink); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--fluo-pink); padding: 8px 14px; font-weight: 900; font-size: 16px; pointer-events: none; max-width: 90%; text-align: center; opacity: 0; transition: opacity .2s; }
+.toast.show { opacity: 1; }
+
+/* Overlays */
+.overlay { position: fixed; inset: 0; background: rgba(21,17,13,.72); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 20; }
+.sheet { max-width: 460px; width: 100%; max-height: 92vh; overflow-y: auto; }
+.sheet h2 { font-size: 30px; }
+.steppers { display: flex; flex-direction: column; gap: 6px; }
+.step { display: grid; grid-template-columns: 30px 1fr 38px 34px 38px; gap: 6px; align-items: center; font-weight: 900; }
+.step img { width: 30px; height: 30px; }
+.step button { border: 3px solid var(--ink); background: #fff; font-weight: 900; font-size: 20px; height: 36px; padding: 0; }
+.step button:disabled { opacity: .3; }
+.step output { text-align: center; font-family: var(--font-display); font-size: 22px; }
+.step .have { font-size: 12px; opacity: .7; font-weight: 700; }
+.picks { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.pickres { border: 3px solid var(--ink); background: #fff; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+.pickres img { width: 36px; height: 36px; }
+.pickres[aria-pressed="true"] { background: var(--fluo-yellow); box-shadow: inset 0 0 0 2px var(--ink); }
+.pickres:disabled { opacity: .3; }
+.pickres em { font-style: normal; font-weight: 700; font-size: 11px; text-transform: none; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row .btn { flex: 1; }
+.answers { display: flex; flex-direction: column; gap: 6px; }
+.answer { display: flex; align-items: center; gap: 8px; border: 3px solid var(--ink); padding: 6px 8px; background: #fff; font-weight: 700; }
+.answer span { flex: 1; }
+.answer .btn { font-size: 13px; padding: 6px 8px; box-shadow: 2px 2px 0 var(--ink); }
+#cover .sheet { text-align: center; align-items: center; }
+#cover .bigname { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(38px, 12vw, 60px); line-height: 1; overflow-wrap: anywhere; }
+#banner { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 30; width: min(420px, 92vw); cursor: pointer; }
+#banner.show { animation: deal .45s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes deal { from { transform: translateX(-50%) rotate(-10deg) scale(.6); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
+#banner .panel { border-width: 4px; box-shadow: 8px 8px 0 var(--fluo-pink); }
+#banner .evname { font-size: 34px; }
+.scores { width: 100%; border-collapse: collapse; font-weight: 700; }
+.scores td { padding: 7px 0; border-bottom: 2px solid var(--ink); }
+.scores td:last-child { text-align: right; font-family: var(--font-display); font-size: 20px; }
+.stamp { align-self: flex-start; font-family: var(--font-display); text-transform: uppercase; font-size: 40px; line-height: 1; padding: 10px 14px 6px; border: 5px solid var(--ink); background: var(--win); color: var(--paper); transform: rotate(-4deg); animation: slam .3s cubic-bezier(.2, 1.6, .4, 1); overflow-wrap: anywhere; }
+@keyframes slam { from { transform: rotate(-4deg) scale(2.2); opacity: 0; } to { transform: rotate(-4deg) scale(1); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .die.roll, .res.bump, #banner.show, .stamp { animation: none; }
+  .btn { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<main id="setup">
+  <div class="kicker"><a href="../">← Juegos</a><span>De 2 a 6 · Un solo aparato</span></div>
+  <h1>Tierra <span class="pop">Bronca</span></h1>
+  <p class="lead">Junta madera, adobe, maíz, ganado y cobre. Arma ranchos, hazlos pueblos y gánale el desierto a tus compas. Cuidado con el chupacabras. Y con los marcianos. Y con la suegra.</p>
+
+  <section class="panel">
+    <h3>¿Cuántos juegan?</h3>
+    <div class="counts" id="countBtns"></div>
+    <div id="playerRows" class="stack"></div>
+    <p class="muted">Pueden jugar varias personas pasándose el aparato, o tú solo contra la máquina.</p>
+  </section>
+
+  <section class="panel">
+    <h3>Expansiones</h3>
+    <div class="stack" id="expBtns"></div>
+  </section>
+
+  <button class="btn wide" id="startBtn">¡A poblar el desierto!</button>
+
+  <section class="panel">
+    <h3>Cómo se juega</h3>
+    <ul class="rules">
+      <li>Cada quien pone <b>2 ranchos</b> y <b>2 caminos</b> para empezar.</li>
+      <li>En tu turno tiras los dados. Cada terreno con ese número le da su recurso a los ranchos y pueblos que lo tocan.</li>
+      <li>Gasta recursos para construir, cambia con el banco o con los demás.</li>
+      <li>Si sale <b>7</b> despierta el chupacabras: quien tenga más de 7 cartas tira la mitad, y tú lo mueves para frenar un terreno y robar una carta.</li>
+      <li>Gana quien llegue primero a <b>10 puntos</b>. Rancho 1, pueblo 2, Camino Real 2 (5 caminos seguidos o más), Mejor Cuadrilla 2 (3 vaqueros o más).</li>
+    </ul>
+    <h3>Lo que lo hace bronco</h3>
+    <ul class="rules">
+      <li><b>Noticias de la ronda.</b> Cada ronda sale una noticia que cambia las reglas: sequía, feria, tolvanera, fiebre del cobre, remesa y más.</li>
+      <li><b>El mapa se mueve.</b> Un arroyo crecido revuelve los números y una veta nueva puede volver mina el médano.</li>
+      <li><b>Oficios.</b> Cada quien tiene un poder: el Compa de la Troca, el Gambusino, la Tía del Tupper, la Abuela Curandera, el Maistro Albañil o el Velador.</li>
+    </ul>
+    <h3>Expansiones</h3>
+    <ul class="rules">
+      <li><b>Tierra Grande.</b> El mapa crece y la orilla está tapada. Al llegar con un camino o rancho se destapa y te llevas 1 de ese recurso. Juegan hasta 6 y se gana con 12 puntos.</li>
+      <li><b>Los Marcianos.</b> Cada vez que alguien saca dados iguales, el ovni avanza. Al llegar compara los pueblos de todos contra los gorros de aluminio y vaqueros de todos. Si ganan ustedes, quien más defendió es Héroe de la Zona del Silencio (+1 punto). Si pierden, a quien menos defendió le bajan un pueblo a rancho.</li>
+    </ul>
+    <h3>Lo que cuesta</h3>
+    <div class="costs" id="costList"></div>
+  </section>
+</main>
+
+<div id="game" class="hidden">
+  <div class="topbar">
+    <h2>Tierra <span class="pop">Bronca</span></h2>
+    <button class="btn alt" id="quitBtn">Salir</button>
+  </div>
+  <div class="layout">
+    <div class="board-wrap" id="boardWrap">
+      <canvas id="board" aria-label="Tablero"></canvas>
+      <div class="toast" id="toast"></div>
+    </div>
+    <aside class="side">
+      <section class="panel">
+        <div class="turn">
+          <span class="dot" id="turnDot"></span>
+          <div class="who"><div class="nm" id="turnName"></div><div class="muted" id="turnOficio"></div></div>
+          <div class="dice"><div class="die" id="die0"></div><div class="die" id="die1"></div></div>
+        </div>
+        <div class="hintline" id="hint"></div>
+      </section>
+      <section class="panel dark event" id="eventBox">
+        <span class="evtag" id="evTag"></span>
+        <span class="evname" id="evName"></span>
+        <span id="evText"></span>
+        <span class="ovni" id="ovniLine"></span>
+        <span class="muted" id="goalLine"></span>
+      </section>
+      <section class="panel" id="handBox">
+        <h3 id="handTitle">Tu mano</h3>
+        <div class="hand" id="hand"></div>
+        <div class="cards" id="cards"></div>
+      </section>
+      <section class="panel">
+        <div class="actions" id="actions"></div>
+      </section>
+      <section class="panel">
+        <h3>Jugadores</h3>
+        <div class="plist" id="plist"></div>
+      </section>
+      <section class="panel">
+        <h3>Lo que ha pasado</h3>
+        <div class="log" id="log"></div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<div class="overlay hidden" id="modal"><div class="panel sheet" id="sheet"></div></div>
+<div class="overlay hidden" id="cover"><div class="panel sheet">
+  <h3>Pásale el aparato a</h3>
+  <div class="bigname" id="coverName"></div>
+  <p class="muted">Que nadie más vea tu mano.</p>
+  <button class="btn wide" id="coverBtn">Ya lo tengo</button>
+</div></div>
+<div id="banner" class="hidden"><div class="panel dark event">
+  <span class="evtag" id="bnTag"></span>
+  <span class="evname" id="bnName"></span>
+  <span id="bnText"></span>
+</div></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Data ----------
+  var INK = "#15110d", PAPER = "#fff9e3", PI = Math.PI, SQ3 = Math.sqrt(3);
+  var RES = ["madera", "adobe", "maiz", "ganado", "cobre"];
+  var RES_NAME = { madera: "Madera", adobe: "Adobe", maiz: "Maíz", ganado: "Ganado", cobre: "Cobre" };
+  var TILE = {
+    sierra: { res: "madera", name: "Sierra", col: "#3a9a5e" },
+    llano: { res: "adobe", name: "Llano", col: "#e0874a" },
+    milpa: { res: "maiz", name: "Milpa", col: "#f4c834" },
+    pasto: { res: "ganado", name: "Pastizal", col: "#a5d25e" },
+    mina: { res: "cobre", name: "Mina", col: "#9a93ab" },
+    medano: { res: null, name: "Médano", col: "#f2dca4" }
+  };
+  var RES_TILE = { madera: "sierra", adobe: "llano", maiz: "milpa", ganado: "pasto", cobre: "mina" };
+  var COLORS = [
+    { c: "#ff2e88", name: "Rosa" },
+    { c: "#2f6bff", name: "Azul" },
+    { c: "#f6f2e4", name: "Blanco" },
+    { c: "#9b4dff", name: "Morado" },
+    { c: "#19d3e6", name: "Cian" },
+    { c: "#e8262b", name: "Rojo" }
+  ];
+  var DEFAULT_NAMES = ["Chuy", "Lupita", "Nacho", "Yoli", "Beto", "Chayo"];
+  var COST = {
+    camino: { madera: 1, adobe: 1 },
+    rancho: { madera: 1, adobe: 1, maiz: 1, ganado: 1 },
+    pueblo: { maiz: 2, cobre: 3 },
+    encargo: { maiz: 1, ganado: 1, cobre: 1 },
+    gorro: { adobe: 1, cobre: 1 }
+  };
+  var LIMIT = { camino: 15, rancho: 5, pueblo: 4, gorro: 6 };
+  var GOAL = 10;
+  var OFICIOS = {
+    arriera: { name: "El Compa de la Troca", desc: "Tus caminos cuestan solo 1 madera. La troca hace lo demás." },
+    minero: { name: "El Gambusino", desc: "Cada vez que tus minas dan, sacas 1 cobre extra." },
+    comerciante: { name: "La Tía del Tupper", desc: "Todo lo cambia. Banco 3 por 1 (2 por 1 en feria)." },
+    curandera: { name: "La Abuela Curandera", desc: "El chupacabras le tiene miedo. No te roba ni frena tus casas." },
+    albanil: { name: "El Maistro Albañil", desc: "Tus pueblos cuestan 1 cobre menos. Dice que el lunes termina." },
+    velador: { name: "El Velador", desc: "Cuando sale 7 nunca tiras cartas. Ni duerme." }
+  };
+  var OFICIO_IDS = Object.keys(OFICIOS);
+  var ENC = {
+    vaquero: { name: "Vaquero con escoba", desc: "Corretea al chupacabras a otro terreno y roba 1 carta ahí. Cuenta para tu cuadrilla." },
+    capilla: { name: "Capillita", desc: "Vale 1 punto. La abuela está orgullosa. Nadie más la ve." },
+    brecha: { name: "El Compa de la Máquina", desc: "Construye 2 caminos gratis." },
+    bonanza: { name: "Te sacaste la Lotería", desc: "Toma 2 recursos del banco, los que quieras." },
+    acaparar: { name: "Chisme del Pueblo", desc: "Elige un recurso. Todos te dan los que tengan de ese, de pura vergüenza." }
+  };
+  var EVENTS = {
+    sequia: { name: "Sequía", text: "Ni las nubes se asoman. Las milpas no dan maíz esta ronda." },
+    lluvias: { name: "¡Llovió! (milagro)", text: "Milpas y pastizales dan doble esta ronda." },
+    cobre: { name: "Fiebre del cobre", text: "Todos andan con pico y pala. Las minas dan doble esta ronda." },
+    helada: { name: "Se congeló el aguaje", text: "Las vacas se fueron a huelga. Los pastizales no dan ganado esta ronda." },
+    feria: { name: "Feria de Santa Rita", text: "Hay elotes y regateo. Cambias con el banco un punto más barato esta ronda." },
+    tolvanera: { name: "Tolvanera", text: "Se voló hasta la ropa del tendedero. Un terreno no produce esta ronda." },
+    arroyo: { name: "Arroyo crecido", text: "El agua se llevó los letreros. Dos números cambian de lugar para siempre." },
+    veta: { name: "¡Veta nueva!", text: "Un compa cavó buscando las llaves de la troca y halló cobre. El médano ahora es mina." },
+    fiesta: { name: "Boda del primo", text: "Hubo barra libre. Todos reciben 1 recurso al azar. Quien tiene pueblo recibe 2." },
+    hambre: { name: "Chupacabras con antojo", text: "Esta ronda el chupacabras roba 2 cartas en vez de 1." },
+    caravana: { name: "Pasó la caravana", text: "Esta ronda los caminos cuestan solo 1 madera." },
+    remesa: { name: "Llegó la remesa del gabacho", text: "Quien va hasta abajo en puntos recibe 2 recursos al azar." },
+    calma: { name: "Domingo de carnita asada", text: "Nadie hace nada. Aprovecha para construir." },
+    luces: { name: "Luces raras en el cielo", text: "El ovni se acerca 2 pasos de golpe. Saquen los gorros." },
+    senal: { name: "Se fue la señal", text: "Los marcianos se perdieron buscando wifi. El ovni retrocede 1 paso." }
+  };
+  var EVENT_DECK = ["sequia", "lluvias", "cobre", "helada", "feria", "tolvanera", "tolvanera", "arroyo", "arroyo", "veta", "fiesta", "hambre", "caravana", "remesa", "calma"];
+  var OVNI_DECK = ["luces", "luces", "senal"];
+  var OVNI_MAX = 7;
+
+  var params = new URLSearchParams(location.search);
+  var FAST = params.has("rapido");
+  var BOT_DELAY = FAST ? 4 : 700;
+
+  // ---------- Helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function pips(n) { return n ? 6 - Math.abs(7 - n) : 0; }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]; }); }
+  var TONE = {};
+  function hexrgb(h) { return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)]; }
+  function mix(a, b, k) {
+    var key = a + b + k; if (TONE[key]) return TONE[key];
+    var A = hexrgb(a), B = hexrgb(b), r = "#";
+    for (var i = 0; i < 3; i++) r += ("0" + Math.round(A[i] + (B[i] - A[i]) * k).toString(16)).slice(-2);
+    return (TONE[key] = r);
+  }
+  function shd(c) { return mix(c, "#2a1838", 0.38); }
+  function hil(c) { return mix(c, "#fff2cf", 0.35); }
+
+  // ---------- Drawing primitives (cel shading, ink outlines) ----------
+  var LW = 1.5;
+  function poly(c, a, fill, lw) {
+    c.beginPath(); c.moveTo(a[0], a[1]);
+    for (var i = 2; i < a.length; i += 2) c.lineTo(a[i], a[i + 1]);
+    c.closePath();
+    if (fill) { c.fillStyle = fill; c.fill(); }
+    if (lw !== 0) { c.lineWidth = lw || LW; c.strokeStyle = INK; c.lineJoin = "round"; c.stroke(); }
+  }
+  function oell(c, x, y, rx, ry, fill, rot, lw) { c.fillStyle = fill; c.beginPath(); c.ellipse(x, y, rx, ry, rot || 0, 0, PI * 2); c.fill(); if (lw !== 0) { c.lineWidth = lw || LW; c.strokeStyle = INK; c.stroke(); } }
+  function orect(c, x, y, w, h, fill, lw) { c.fillStyle = fill; c.fillRect(x, y, w, h); if (lw !== 0) { c.lineWidth = lw || LW; c.strokeStyle = INK; c.strokeRect(x, y, w, h); } }
+  function inkLine(c, pts, w, col) {
+    c.lineCap = "round"; c.lineJoin = "round";
+    c.beginPath(); c.moveTo(pts[0], pts[1]); for (var i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]);
+    c.strokeStyle = INK; c.lineWidth = w + LW * 2; c.stroke();
+    c.strokeStyle = col; c.lineWidth = w; c.stroke();
+  }
+  function hexPath(c, x, y, s) {
+    c.beginPath();
+    for (var i = 0; i < 6; i++) { var a = PI / 180 * (60 * i - 30); var px = x + s * Math.cos(a), py = y + s * Math.sin(a); if (i) c.lineTo(px, py); else c.moveTo(px, py); }
+    c.closePath();
+  }
+
+  function pine(c, x, y, k) {
+    var g = "#1f7a47";
+    orect(c, x - k * 0.06, y - k * 0.16, k * 0.12, k * 0.16, "#7a4a2a");
+    poly(c, [x, y - k * 0.62, x - k * 0.3, y - k * 0.14, x + k * 0.3, y - k * 0.14], g);
+    poly(c, [x, y - k * 0.9, x - k * 0.24, y - k * 0.42, x + k * 0.24, y - k * 0.42], g);
+    c.strokeStyle = hil(g); c.lineWidth = Math.max(1, k * 0.05); c.lineCap = "round";
+    c.beginPath(); c.moveTo(x - k * 0.04, y - k * 0.82); c.lineTo(x - k * 0.17, y - k * 0.5); c.stroke();
+    c.beginPath(); c.moveTo(x - k * 0.06, y - k * 0.54); c.lineTo(x - k * 0.22, y - k * 0.22); c.stroke();
+  }
+  function brick(c, x, y, k) {
+    var b = "#c25a2c";
+    orect(c, x - k * 0.17, y - k * 0.08, k * 0.34, k * 0.16, b);
+    c.fillStyle = hil(b); c.fillRect(x - k * 0.15, y - k * 0.06, k * 0.3, k * 0.035);
+    c.fillStyle = shd(b); c.fillRect(x - k * 0.15, y + k * 0.035, k * 0.3, k * 0.035);
+  }
+  function corn(c, x, y, k) {
+    inkLine(c, [x, y, x + k * 0.02, y - k * 0.7], Math.max(1.5, k * 0.05), "#3f8f31");
+    c.strokeStyle = INK; c.lineWidth = LW; c.fillStyle = "#4fa83c";
+    c.beginPath(); c.moveTo(x, y - k * 0.25); c.quadraticCurveTo(x - k * 0.25, y - k * 0.35, x - k * 0.28, y - k * 0.15); c.quadraticCurveTo(x - k * 0.12, y - k * 0.28, x, y - k * 0.2); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(x + k * 0.01, y - k * 0.45); c.quadraticCurveTo(x + k * 0.26, y - k * 0.55, x + k * 0.28, y - k * 0.36); c.quadraticCurveTo(x + k * 0.12, y - k * 0.46, x + k * 0.01, y - k * 0.4); c.fill(); c.stroke();
+    oell(c, x + k * 0.07, y - k * 0.5, k * 0.065, k * 0.15, "#ffd84a", -0.2);
+    c.fillStyle = "#e9a81c"; c.beginPath(); c.ellipse(x + k * 0.09, y - k * 0.47, k * 0.03, k * 0.1, -0.2, 0, PI * 2); c.fill();
+  }
+  function cow(c, x, y, k) {
+    var w = "#fbf7ee";
+    for (var i = 0; i < 4; i++) orect(c, x - k * 0.22 + i * k * 0.13 + (i > 1 ? k * 0.03 : 0), y - k * 0.08, k * 0.07, k * 0.16, w, 1.2);
+    oell(c, x, y - k * 0.16, k * 0.3, k * 0.15, w);
+    c.fillStyle = INK; c.beginPath(); c.ellipse(x - k * 0.08, y - k * 0.2, k * 0.08, k * 0.05, 0.4, 0, PI * 2); c.fill();
+    c.beginPath(); c.ellipse(x + k * 0.12, y - k * 0.1, k * 0.06, k * 0.04, -0.3, 0, PI * 2); c.fill();
+    c.strokeStyle = "#d8c8a0"; c.lineWidth = LW * 1.5; c.beginPath(); c.moveTo(x + k * 0.3, y - k * 0.38); c.lineTo(x + k * 0.36, y - k * 0.44); c.moveTo(x + k * 0.42, y - k * 0.38); c.lineTo(x + k * 0.46, y - k * 0.45); c.stroke();
+    oell(c, x + k * 0.36, y - k * 0.28, k * 0.12, k * 0.11, w);
+    oell(c, x + k * 0.4, y - k * 0.21, k * 0.08, k * 0.055, "#f3a4a4", 0, 1.2);
+    c.fillStyle = INK; c.beginPath(); c.arc(x + k * 0.33, y - k * 0.31, k * 0.022, 0, PI * 2); c.fill();
+    c.strokeStyle = INK; c.lineWidth = LW; c.beginPath(); c.moveTo(x - k * 0.3, y - k * 0.2); c.quadraticCurveTo(x - k * 0.4, y - k * 0.15, x - k * 0.38, y - k * 0.05); c.stroke();
+  }
+  function tuft(c, x, y, k) {
+    c.strokeStyle = "#3e7f2c"; c.lineWidth = Math.max(1.2, k * 0.04); c.lineCap = "round";
+    c.beginPath(); c.moveTo(x - k * 0.08, y); c.lineTo(x - k * 0.12, y - k * 0.14); c.moveTo(x, y); c.lineTo(x, y - k * 0.18); c.moveTo(x + k * 0.08, y); c.lineTo(x + k * 0.12, y - k * 0.13); c.stroke();
+  }
+  function rock(c, x, y, k, col) { poly(c, [x - k * 0.14, y, x - k * 0.1, y - k * 0.1, x + k * 0.02, y - k * 0.14, x + k * 0.14, y - k * 0.05, x + k * 0.13, y], col || "#7b7488"); }
+  function nugget(c, x, y, k) { oell(c, x, y, k * 0.07, k * 0.055, "#e07a35", 0.3, 1.2); c.fillStyle = "#ffc08a"; c.beginPath(); c.arc(x - k * 0.02, y - k * 0.02, k * 0.02, 0, PI * 2); c.fill(); }
+  function cactus(c, x, y, k) {
+    var g = "#3c9a52";
+    c.lineCap = "round";
+    inkLine(c, [x - k * 0.17, y - k * 0.3, x - k * 0.17, y - k * 0.42], k * 0.08, g);
+    inkLine(c, [x - k * 0.17, y - k * 0.3, x, y - k * 0.3], k * 0.08, g);
+    inkLine(c, [x + k * 0.15, y - k * 0.4, x + k * 0.15, y - k * 0.55], k * 0.08, g);
+    inkLine(c, [x + k * 0.15, y - k * 0.4, x, y - k * 0.4], k * 0.08, g);
+    inkLine(c, [x, y, x, y - k * 0.72], k * 0.13, g);
+    c.strokeStyle = hil(g); c.lineWidth = Math.max(1, k * 0.03); c.beginPath(); c.moveTo(x - k * 0.03, y - k * 0.05); c.lineTo(x - k * 0.03, y - k * 0.66); c.stroke();
+  }
+  function mountain(c, x, y, k) {
+    var m = "#6f6880";
+    poly(c, [x - k * 0.6, y, x - k * 0.15, y - k * 0.68, x + k * 0.05, y - k * 0.45, x + k * 0.22, y - k * 0.6, x + k * 0.6, y], m);
+    c.fillStyle = shd(m); c.beginPath(); c.moveTo(x + k * 0.22, y - k * 0.6); c.lineTo(x + k * 0.6, y); c.lineTo(x + k * 0.25, y); c.closePath(); c.fill();
+    c.strokeStyle = "#e07a35"; c.lineWidth = Math.max(1.2, k * 0.035); c.beginPath(); c.moveTo(x - k * 0.35, y - k * 0.25); c.lineTo(x - k * 0.2, y - k * 0.35); c.lineTo(x - k * 0.1, y - k * 0.3); c.stroke();
+    c.fillStyle = INK; c.beginPath(); c.moveTo(x - k * 0.13, y); c.lineTo(x - k * 0.13, y - k * 0.16); c.arc(x, y - k * 0.16, k * 0.13, PI, 0); c.lineTo(x + k * 0.13, y); c.closePath(); c.fill();
+    c.strokeStyle = "#8a5a2c"; c.lineWidth = Math.max(2, k * 0.06); c.beginPath(); c.moveTo(x - k * 0.15, y); c.lineTo(x - k * 0.15, y - k * 0.2); c.lineTo(x + k * 0.15, y - k * 0.2); c.lineTo(x + k * 0.15, y); c.stroke();
+    nugget(c, x + k * 0.32, y - k * 0.06, k);
+  }
+  function dunes(c, x, y, k) {
+    c.strokeStyle = "#cfa65a"; c.lineWidth = Math.max(1.2, k * 0.035); c.lineCap = "round";
+    for (var i = 0; i < 3; i++) { var yy = y + (i - 1) * k * 0.3; c.beginPath(); c.moveTo(x - k * 0.7, yy + k * 0.05); c.quadraticCurveTo(x - k * 0.3, yy - k * 0.15, x, yy); c.quadraticCurveTo(x + k * 0.3, yy + k * 0.12, x + k * 0.7, yy - k * 0.05); c.stroke(); }
+  }
+
+  // The art in the top half of each tile; the number token sits in the lower middle.
+  function tileArt(c, type, x, y, s, icon) {
+    LW = Math.max(1, s * (icon ? 0.04 : 0.028));
+    var ay = icon ? y + s * 0.3 : y - s * 0.1;
+    var k = icon ? s * 0.95 : s * 0.75;
+    if (type === "sierra") { pine(c, x, ay - k * 0.1, k * 0.85); pine(c, x - k * 0.36, ay, k * 0.7); pine(c, x + k * 0.36, ay, k * 0.7); }
+    else if (type === "llano") { brick(c, x - k * 0.18, ay - k * 0.1, k); brick(c, x + k * 0.18, ay - k * 0.1, k); brick(c, x, ay - k * 0.27, k); tuft(c, x + k * 0.42, ay, k); }
+    else if (type === "milpa") { corn(c, x - k * 0.28, ay, k * 0.85); corn(c, x + k * 0.28, ay, k * 0.85); corn(c, x, ay - k * 0.06, k); }
+    else if (type === "pasto") { tuft(c, x - k * 0.42, ay, k); cow(c, x - k * 0.05, ay, k); tuft(c, x + k * 0.38, ay + k * 0.02, k * 0.8); }
+    else if (type === "mina") { mountain(c, x, ay, k); }
+    else if (type === "medano") { dunes(c, x, y + s * 0.1, k); cactus(c, x, y + s * 0.42, s * 0.9); }
+    if (!icon && type !== "medano") {
+      var by = y + s * 0.58, bx = s * 0.5, kk = s * 0.42;
+      if (type === "sierra") { pine(c, x - bx, by, kk); pine(c, x + bx, by, kk); }
+      if (type === "llano") { brick(c, x - bx, by - kk * 0.1, kk * 1.4); tuft(c, x + bx, by, kk * 1.4); }
+      if (type === "milpa") { corn(c, x - bx, by, kk * 0.9); corn(c, x + bx, by, kk * 0.9); }
+      if (type === "pasto") { tuft(c, x - bx, by, kk * 1.4); tuft(c, x + bx, by, kk * 1.4); }
+      if (type === "mina") { rock(c, x - bx, by, kk * 1.4); nugget(c, x + bx, by - kk * 0.1, kk * 1.6); }
+    }
+  }
+
+  function drawTile(c, type, x, y, s, icon) {
+    var base = TILE[type].col;
+    hexPath(c, x, y, s * 0.97);
+    c.save(); c.clip();
+    c.fillStyle = base; c.fillRect(x - s, y - s, s * 2, s * 2);
+    c.fillStyle = shd(base); c.globalAlpha = 0.55;
+    c.beginPath(); c.moveTo(x - s, y + s * 0.55); c.quadraticCurveTo(x, y + s * 0.38, x + s, y + s * 0.6); c.lineTo(x + s, y + s); c.lineTo(x - s, y + s); c.fill();
+    c.globalAlpha = 1;
+    c.strokeStyle = hil(base); c.lineWidth = s * 0.08;
+    c.beginPath(); var r = s * 0.86;
+    c.moveTo(x - r * SQ3 / 2, y - r / 2); c.lineTo(x, y - r); c.lineTo(x + r * SQ3 / 2, y - r / 2); c.stroke();
+    tileArt(c, type, x, y, s, icon);
+    c.restore();
+    hexPath(c, x, y, s * 0.97);
+    c.lineWidth = Math.max(1.5, s * 0.05); c.strokeStyle = INK; c.lineJoin = "round"; c.stroke();
+  }
+
+  function drawToken(c, n, x, y, s, flash) {
+    var r = s * 0.29;
+    c.fillStyle = "rgba(21,17,13,.35)"; c.beginPath(); c.arc(x + s * 0.03, y + s * 0.04, r, 0, PI * 2); c.fill();
+    oell(c, x, y, r, r, flash ? "#fff27a" : PAPER, 0, Math.max(1.5, s * 0.04));
+    var hot = n === 6 || n === 8;
+    c.fillStyle = hot ? "#d6202f" : INK;
+    c.font = Math.round(s * (hot ? 0.3 : 0.26)) + 'px "Bowlby One", "Arial Black", sans-serif';
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText(String(n), x, y - s * 0.04);
+    var p = pips(n), w = s * 0.055;
+    for (var i = 0; i < p; i++) { c.beginPath(); c.arc(x + (i - (p - 1) / 2) * w, y + s * 0.16, s * 0.018, 0, PI * 2); c.fill(); }
+  }
+
+  function drawChupa(c, x, y, k, t) {
+    LW = Math.max(1.2, k * 0.035);
+    var body = "#5d6a4f", bob = Math.sin(t / 260) * k * 0.03;
+    y += bob;
+    c.fillStyle = "rgba(21,17,13,.35)"; c.beginPath(); c.ellipse(x, y + k * 0.42 - bob, k * 0.42, k * 0.08, 0, 0, PI * 2); c.fill();
+    // legs
+    inkLine(c, [x - k * 0.2, y + k * 0.15, x - k * 0.26, y + k * 0.4], k * 0.08, shd(body));
+    inkLine(c, [x + k * 0.18, y + k * 0.15, x + k * 0.24, y + k * 0.4], k * 0.08, shd(body));
+    // spikes
+    for (var i = 0; i < 5; i++) { var sx = x - k * 0.3 + i * k * 0.13, sy = y - k * 0.12 - Math.sin(i / 4 * PI) * k * 0.08; poly(c, [sx - k * 0.06, sy + k * 0.04, sx, sy - k * 0.18, sx + k * 0.06, sy + k * 0.04], "#c3306b"); }
+    oell(c, x - k * 0.02, y + k * 0.05, k * 0.36, k * 0.22, body);
+    c.fillStyle = hil(body); c.beginPath(); c.ellipse(x - k * 0.1, y - k * 0.04, k * 0.18, k * 0.06, -0.2, 0, PI * 2); c.fill();
+    // head
+    oell(c, x + k * 0.3, y - k * 0.08, k * 0.2, k * 0.18, body);
+    var eg = "#ff3b30";
+    c.save(); c.shadowColor = eg; c.shadowBlur = k * 0.15;
+    oell(c, x + k * 0.26, y - k * 0.13, k * 0.065, k * 0.08, eg, 0, 1);
+    oell(c, x + k * 0.39, y - k * 0.12, k * 0.06, k * 0.075, eg, 0, 1);
+    c.restore();
+    c.fillStyle = INK; c.beginPath(); c.arc(x + k * 0.27, y - k * 0.12, k * 0.025, 0, PI * 2); c.arc(x + k * 0.4, y - k * 0.11, k * 0.022, 0, PI * 2); c.fill();
+    c.fillStyle = "#fff"; poly(c, [x + k * 0.27, y + k * 0.0, x + k * 0.3, y + k * 0.08, x + k * 0.33, y + k * 0.0], "#fff", 1); poly(c, [x + k * 0.36, y + k * 0.0, x + k * 0.385, y + k * 0.07, x + k * 0.41, y + k * 0.0], "#fff", 1);
+  }
+
+  function drawRancho(c, x, y, k, col) {
+    LW = Math.max(1.2, k * 0.06);
+    c.fillStyle = "rgba(21,17,13,.4)"; c.beginPath(); c.ellipse(x, y + k * 0.32, k * 0.42, k * 0.1, 0, 0, PI * 2); c.fill();
+    orect(c, x - k * 0.3, y - k * 0.05, k * 0.6, k * 0.38, col);
+    c.fillStyle = shd(col); c.fillRect(x + k * 0.12, y - k * 0.03, k * 0.16, k * 0.34);
+    poly(c, [x - k * 0.4, y - k * 0.03, x, y - k * 0.42, x + k * 0.4, y - k * 0.03], "#b6452a");
+    c.strokeStyle = hil("#b6452a"); c.lineWidth = LW; c.beginPath(); c.moveTo(x - k * 0.28, y - k * 0.1); c.lineTo(x, y - k * 0.36); c.stroke();
+    orect(c, x - k * 0.07, y + k * 0.12, k * 0.14, k * 0.21, INK, 0);
+  }
+  function drawPueblo(c, x, y, k, col) {
+    LW = Math.max(1.2, k * 0.06);
+    c.fillStyle = "rgba(21,17,13,.4)"; c.beginPath(); c.ellipse(x, y + k * 0.36, k * 0.55, k * 0.11, 0, 0, PI * 2); c.fill();
+    orect(c, x - k * 0.48, y - k * 0.02, k * 0.62, k * 0.38, col);
+    poly(c, [x - k * 0.56, y, x - k * 0.17, y - k * 0.32, x + k * 0.22, y], "#b6452a");
+    orect(c, x + k * 0.1, y - k * 0.42, k * 0.34, k * 0.78, col);
+    c.fillStyle = shd(col); c.fillRect(x + k * 0.33, y - k * 0.4, k * 0.1, k * 0.75);
+    poly(c, [x + k * 0.07, y - k * 0.42, x + k * 0.27, y - k * 0.66, x + k * 0.47, y - k * 0.42], "#b6452a");
+    c.fillStyle = INK; c.beginPath(); c.moveTo(x + k * 0.2, y - k * 0.12); c.lineTo(x + k * 0.2, y - k * 0.25); c.arc(x + k * 0.27, y - k * 0.25, k * 0.07, PI, 0); c.lineTo(x + k * 0.34, y - k * 0.12); c.fill();
+    c.fillStyle = "#ffd84a"; c.beginPath(); c.arc(x + k * 0.27, y - k * 0.2, k * 0.035, 0, PI * 2); c.fill();
+    orect(c, x - k * 0.24, y + k * 0.15, k * 0.13, k * 0.21, INK, 0);
+  }
+  function drawRoad(c, ax, ay, bx, by, s, col) {
+    var dx = bx - ax, dy = by - ay, f = 0.2;
+    LW = Math.max(1.2, s * 0.03);
+    c.lineCap = "round";
+    c.strokeStyle = INK; c.lineWidth = s * 0.17; c.beginPath(); c.moveTo(ax + dx * f, ay + dy * f); c.lineTo(bx - dx * f, by - dy * f); c.stroke();
+    c.strokeStyle = col; c.lineWidth = s * 0.1; c.stroke();
+    c.strokeStyle = hil(col); c.lineWidth = s * 0.03; c.beginPath(); c.moveTo(ax + dx * f - dy * 0.03, ay + dy * f + dx * 0.03 - s * 0.02); c.lineTo(bx - dx * f - dy * 0.03, by - dy * f + dx * 0.03 - s * 0.02); c.stroke();
+  }
+
+  function drawFog(c, x, y, s) {
+    hexPath(c, x, y, s * 0.97);
+    c.fillStyle = "#6b5140"; c.fill();
+    c.save(); c.clip();
+    c.strokeStyle = "rgba(255,240,210,.18)"; c.lineWidth = s * 0.05; c.lineCap = "round";
+    for (var k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(x - s, y + k * s * 0.35); c.quadraticCurveTo(x, y + k * s * 0.35 - s * 0.2, x + s, y + k * s * 0.35); c.stroke(); }
+    c.restore();
+    hexPath(c, x, y, s * 0.97); c.lineWidth = Math.max(1.5, s * 0.05); c.strokeStyle = INK; c.stroke();
+    c.font = Math.round(s * 0.62) + 'px "Bowlby One", "Arial Black", sans-serif';
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.lineWidth = Math.max(2, s * 0.08); c.strokeStyle = INK; c.strokeText("?", x, y + s * 0.04);
+    c.fillStyle = "#f2dca4"; c.fillText("?", x, y + s * 0.04);
+  }
+  function drawSaucer(c, x, y, k, t) {
+    LW = Math.max(1.2, k * 0.05);
+    c.fillStyle = "rgba(120,255,160,.25)"; c.beginPath(); c.moveTo(x - k * 0.25, y + k * 0.1); c.lineTo(x - k * 0.5, y + k * 0.9); c.lineTo(x + k * 0.5, y + k * 0.9); c.lineTo(x + k * 0.25, y + k * 0.1); c.fill();
+    oell(c, x, y - k * 0.12, k * 0.3, k * 0.26, "#9fe8ff");
+    c.fillStyle = "#7bd96b"; c.beginPath(); c.arc(x, y - k * 0.12, k * 0.12, 0, PI * 2); c.fill();
+    c.fillStyle = INK; c.beginPath(); c.ellipse(x - k * 0.05, y - k * 0.14, k * 0.03, k * 0.05, 0, 0, PI * 2); c.ellipse(x + k * 0.05, y - k * 0.14, k * 0.03, k * 0.05, 0, 0, PI * 2); c.fill();
+    oell(c, x, y + k * 0.05, k * 0.62, k * 0.17, "#c9ccd6");
+    c.fillStyle = hil("#c9ccd6"); c.beginPath(); c.ellipse(x - k * 0.15, y + k * 0.0, k * 0.3, k * 0.05, 0, 0, PI * 2); c.fill();
+    for (var i = 0; i < 5; i++) { var on = Math.floor(t / 200 + i) % 2; c.fillStyle = on ? "#ffe500" : "#ff2e88"; c.beginPath(); c.arc(x + (i - 2) * k * 0.24, y + k * 0.09, k * 0.045, 0, PI * 2); c.fill(); }
+  }
+  function drawOvniTrack(c, t) {
+    var x0 = S * 0.5, y0 = S * 0.55, step = S * 0.42;
+    c.font = "900 " + Math.round(S * 0.2) + "px Chivo, Arial, sans-serif"; c.textAlign = "left"; c.textBaseline = "middle";
+    c.fillStyle = "#ffe500"; c.fillText("OVNI " + G.ovni + "/" + OVNI_MAX, x0 - S * 0.12, y0 - S * 0.3);
+    for (var i = 0; i <= OVNI_MAX; i++) {
+      var x = x0 + i * step, y = y0 + S * 0.3;
+      c.fillStyle = i === OVNI_MAX ? "#ff2e88" : i < G.ovni ? "#ffe500" : "rgba(255,249,227,.25)";
+      c.beginPath(); c.arc(x, y, S * (i === OVNI_MAX ? 0.11 : 0.07), 0, PI * 2); c.fill();
+    }
+    drawSaucer(c, x0 + G.ovni * step, y0 + S * 0.05 + Math.sin(t / 300) * S * 0.04, S * 0.45, t);
+  }
+
+  // Resource icons for the panel, drawn with the same art as the tiles.
+  var ICONS = {};
+  function makeIcons() {
+    RES.forEach(function (r) {
+      var cv = document.createElement("canvas"); cv.width = 96; cv.height = 96;
+      var c = cv.getContext("2d");
+      drawTile(c, RES_TILE[r], 48, 48, 46, true);
+      ICONS[r] = cv.toDataURL();
+    });
+  }
+  function icon(r, cls) { return '<img class="' + (cls || "") + '" src="' + ICONS[r] + '" alt="' + RES_NAME[r] + '">'; }
+
+  // ---------- Board ----------
+  function buildBoard(R) {
+    var hexes = [], verts = [], edges = [], vmap = {}, emap = {};
+    var types = shuffle(["sierra", "sierra", "sierra", "sierra", "llano", "llano", "llano", "milpa", "milpa", "milpa", "milpa", "pasto", "pasto", "pasto", "pasto", "mina", "mina", "mina", "medano"]);
+    var outer = shuffle(["sierra", "sierra", "sierra", "sierra", "llano", "llano", "llano", "milpa", "milpa", "milpa", "pasto", "pasto", "pasto", "pasto", "mina", "mina", "mina", "medano"]);
+    var k = 0, k2 = 0;
+    for (var r = -R; r <= R; r++) for (var q = -R; q <= R; q++) {
+      if (Math.abs(q + r) > R) continue;
+      var far = Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) > 2;
+      hexes.push({ q: q, r: r, type: far ? outer[k2++] : types[k++], fog: far, num: 0, x: SQ3 * (q + r / 2), y: 1.5 * r, v: [], e: [] });
+    }
+    hexes.forEach(function (h, hi) {
+      for (var i = 0; i < 6; i++) {
+        var a = PI / 180 * (60 * i - 30), x = h.x + Math.cos(a), y = h.y + Math.sin(a);
+        var key = Math.round(x * 100) + "," + Math.round(y * 100);
+        if (vmap[key] === undefined) { vmap[key] = verts.length; verts.push({ x: x, y: y, h: [], adj: [], e: [], b: null }); }
+        h.v.push(vmap[key]); verts[vmap[key]].h.push(hi);
+      }
+      for (i = 0; i < 6; i++) {
+        var va = h.v[i], vb = h.v[(i + 1) % 6], ek = Math.min(va, vb) + "-" + Math.max(va, vb);
+        if (emap[ek] === undefined) {
+          emap[ek] = edges.length;
+          edges.push({ a: va, b: vb, r: null });
+          verts[va].adj.push(vb); verts[vb].adj.push(va);
+          verts[va].e.push(emap[ek]); verts[vb].e.push(emap[ek]);
+        }
+        h.e.push(emap[ek]);
+      }
+    });
+    assignNumbers(hexes);
+    return { hexes: hexes, verts: verts, edges: edges };
+  }
+  function hexNeighbors(hexes, h) {
+    var d = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1]];
+    return hexes.filter(function (o) { return d.some(function (dd) { return o.q === h.q + dd[0] && o.r === h.r + dd[1]; }); });
+  }
+  function assignNumbers(hexes) {
+    var base = [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12];
+    for (var t = 0; t < 2000; t++) {
+      var ns = shuffle(base.slice()).concat(shuffle(base.slice())), k = 0;
+      hexes.forEach(function (h) { h.num = h.type === "medano" ? 0 : ns[k++]; });
+      var bad = hexes.some(function (h) { return (h.num === 6 || h.num === 8) && hexNeighbors(hexes, h).some(function (o) { return o.num === 6 || o.num === 8; }); });
+      if (!bad) return;
+    }
+  }
+
+  // ---------- Game state ----------
+  var G = null;
+  window.__tierra = function () { return G; };
+
+  function newGame(cfg, opts) {
+    var b = buildBoard(opts.grande ? 3 : 2);
+    var encDeck = [];
+    [["vaquero", 14], ["capilla", 5], ["brecha", 2], ["bonanza", 2], ["acaparar", 2]].forEach(function (e) { for (var i = 0; i < e[1]; i++) encDeck.push(e[0]); });
+    G = {
+      hexes: b.hexes, verts: b.verts, edges: b.edges,
+      players: cfg.map(function (c, i) {
+        return { name: c.name, color: COLORS[i].c, bot: c.bot, oficio: c.oficio, res: { madera: 0, adobe: 0, maiz: 0, ganado: 0, cobre: 0 }, cards: [], army: 0, ranchos: 0, pueblos: 0, caminos: 0, road: 0, gorros: 0, heroes: 0 };
+      }),
+      chupa: b.hexes.findIndex(function (h) { return h.type === "medano" && !h.fog; }),
+      opts: opts, R: opts.grande ? 3 : 2, goal: opts.grande ? 12 : GOAL, ovni: 0, invasions: 0,
+      encDeck: shuffle(encDeck), evDeck: [], event: null, dust: -1, flash: null, vetaDone: false,
+      cur: 0, phase: "setup", mode: null, round: 0, dice: null,
+      setupOrder: [], setupIdx: 0, setupV: -1,
+      roadHolder: -1, armyHolder: -1, played: false, freeRoads: 0, botTrades: 0, lastViewer: -1,
+      log: [], winner: -1, turnCount: 0
+    };
+    var n = G.players.length;
+    for (var i = 0; i < n; i++) G.setupOrder.push(i);
+    for (i = n - 1; i >= 0; i--) G.setupOrder.push(i);
+    $("setup").classList.add("hidden");
+    $("game").classList.remove("hidden");
+    $("log").innerHTML = "";
+    log("Se armó el desierto. A poner ranchos.");
+    if (opts.grande) log("Tierra Grande: la orilla está sin explorar. Quien llegue primero se lleva un regalito.");
+    if (opts.marcianos) log("Los Marcianos: cada vez que salen dados iguales, el ovni se acerca.");
+    resize();
+    setupTurn();
+  }
+
+  function P(i) { return G.players[i === undefined ? G.cur : i]; }
+  function total(p) { var t = 0; RES.forEach(function (r) { t += p.res[r]; }); return t; }
+  function costOf(pi, what) {
+    var p = P(pi), c = {};
+    for (var r in COST[what]) c[r] = COST[what][r];
+    if (what === "camino" && (p.oficio === "arriera" || evId() === "caravana")) c = { madera: 1 };
+    if (what === "pueblo" && p.oficio === "albanil") c.cobre = 2;
+    if (what === "camino" && G.freeRoads > 0) c = {};
+    return c;
+  }
+  function has(p, cost) { for (var r in cost) if (p.res[r] < cost[r]) return false; return true; }
+  function pay(p, cost) { for (var r in cost) p.res[r] -= cost[r]; }
+  function evId() { return G.event ? G.event.id : null; }
+  function rate(pi) { var r = P(pi).oficio === "comerciante" ? 3 : 4; if (evId() === "feria") r--; return Math.max(2, r); }
+  function humans() { return G.players.filter(function (p) { return !p.bot; }).length; }
+  function isHumanTurn() { return G && G.winner < 0 && !P().bot; }
+
+  function vp(pi, hidden) {
+    var p = P(pi), v = p.ranchos + p.pueblos * 2;
+    if (G.roadHolder === pi) v += 2;
+    if (G.armyHolder === pi) v += 2;
+    v += p.heroes;
+    if (hidden) v += p.cards.filter(function (c) { return c.t === "capilla"; }).length;
+    return v;
+  }
+
+  // ---------- Placement rules ----------
+  function ranchoOk(pi, vi, setup) {
+    var v = G.verts[vi];
+    if (v.b) return false;
+    if (v.adj.some(function (a) { return G.verts[a].b; })) return false;
+    if (setup) return true;
+    return v.e.some(function (e) { return G.edges[e].r === pi; });
+  }
+  function roadOk(pi, ei, fromV) {
+    var e = G.edges[ei];
+    if (e.r !== null) return false;
+    if (fromV !== undefined) return e.a === fromV || e.b === fromV;
+    return [e.a, e.b].some(function (vi) {
+      var v = G.verts[vi];
+      if (v.b && v.b.p === pi) return true;
+      if (v.b && v.b.p !== pi) return false;
+      return v.e.some(function (x) { return x !== ei && G.edges[x].r === pi; });
+    });
+  }
+  function validVerts(pi, setup) { var o = []; for (var i = 0; i < G.verts.length; i++) if (ranchoOk(pi, i, setup)) o.push(i); return o; }
+  function validEdges(pi, fromV) { var o = []; for (var i = 0; i < G.edges.length; i++) if (roadOk(pi, i, fromV)) o.push(i); return o; }
+  function ownRanchos(pi) { var o = []; G.verts.forEach(function (v, i) { if (v.b && v.b.p === pi && v.b.lvl === 1) o.push(i); }); return o; }
+
+  function canBuild(what) {
+    var pi = G.cur, p = P();
+    if (G.phase !== "main") return false;
+    if (what === "camino") return (G.freeRoads > 0 || has(p, costOf(pi, "camino"))) && p.caminos < LIMIT.camino && validEdges(pi).length > 0;
+    if (what === "rancho") return has(p, costOf(pi, "rancho")) && p.ranchos < LIMIT.rancho && validVerts(pi).length > 0;
+    if (what === "pueblo") return has(p, costOf(pi, "pueblo")) && p.pueblos < LIMIT.pueblo && ownRanchos(pi).length > 0;
+    if (what === "encargo") return has(p, costOf(pi, "encargo")) && G.encDeck.length > 0;
+    if (what === "gorro") return G.opts.marcianos && has(p, costOf(pi, "gorro")) && p.gorros < LIMIT.gorro;
+    return false;
+  }
+
+  // ---------- Longest road ----------
+  function roadLen(pi) {
+    var best = 0, used = {};
+    function walk(vi, depth) {
+      var v = G.verts[vi], m = 0;
+      if (depth > 0 && v.b && v.b.p !== pi) return 0;
+      v.e.forEach(function (ei) {
+        if (used[ei] || G.edges[ei].r !== pi) return;
+        used[ei] = 1;
+        var e = G.edges[ei], o = e.a === vi ? e.b : e.a;
+        m = Math.max(m, 1 + walk(o, depth + 1));
+        used[ei] = 0;
+      });
+      return m;
+    }
+    G.verts.forEach(function (v, vi) { if (v.e.some(function (ei) { return G.edges[ei].r === pi; })) best = Math.max(best, walk(vi, 0)); });
+    return best;
+  }
+  function updateAwards() {
+    var lens = G.players.map(function (p, i) { return (p.road = roadLen(i)); });
+    var h = G.roadHolder, prev = h;
+    if (h >= 0 && lens[h] < 5) h = -1;
+    if (h < 0) {
+      var mx = Math.max.apply(null, lens);
+      var who = lens.map(function (l, i) { return l === mx ? i : -1; }).filter(function (i) { return i >= 0; });
+      if (mx >= 5 && who.length === 1) h = who[0];
+    } else {
+      lens.forEach(function (l, i) { if (l > lens[h]) h = i; });
+    }
+    if (h !== prev) { G.roadHolder = h; if (h >= 0) log(P(h).name + " se queda con el Camino Real (+2).", true); }
+    var a = G.armyHolder;
+    G.players.forEach(function (p, i) { if (p.army >= 3 && (a < 0 || p.army > P(a).army)) a = i; });
+    if (a !== G.armyHolder) { G.armyHolder = a; log(P(a).name + " tiene la Mejor Cuadrilla (+2).", true); }
+  }
+
+  // ---------- Log / toast ----------
+  function log(t, big) {
+    G.log.unshift(t);
+    var d = document.createElement("div"); d.textContent = t; if (big) d.style.fontWeight = "900";
+    var L = $("log"); L.insertBefore(d, L.firstChild);
+    while (L.children.length > 60) L.removeChild(L.lastChild);
+    if (big) toast(t);
+  }
+  var toastT = 0;
+  function toast(t) {
+    var el = $("toast"); el.textContent = t; el.classList.add("show");
+    clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove("show"); }, FAST ? 50 : 2200);
+  }
+  function resList(gain) {
+    var a = [];
+    RES.forEach(function (r) { if (gain[r]) a.push(gain[r] + " " + RES_NAME[r].toLowerCase()); });
+    return a.join(", ");
+  }
+
+  // ---------- Flow: setup ----------
+  function setupTurn() {
+    G.cur = G.setupOrder[G.setupIdx];
+    G.phase = "setup"; G.mode = "setupRancho";
+    if (P().bot) { render(); later(botSetup); }
+    else withCover(G.cur, render);
+  }
+  function placeSetupRancho(vi) {
+    var pi = G.cur, p = P();
+    G.verts[vi].b = { p: pi, lvl: 1 }; p.ranchos++;
+    G.setupV = vi;
+    explore([vi]);
+    if (G.setupIdx >= G.players.length) {
+      var gain = {};
+      G.verts[vi].h.forEach(function (hi) { var r = TILE[G.hexes[hi].type].res; if (r) { p.res[r]++; gain[r] = (gain[r] || 0) + 1; } });
+      log(p.name + " pone su segundo rancho y recibe " + (resList(gain) || "nada") + ".");
+    } else log(p.name + " pone su primer rancho.");
+    G.mode = "setupCamino";
+    dirty = true; render();
+  }
+  function placeSetupRoad(ei) {
+    G.edges[ei].r = G.cur; P().caminos++;
+    explore([G.edges[ei].a, G.edges[ei].b]);
+    G.setupIdx++; G.mode = null; dirty = true;
+    if (G.setupIdx < G.setupOrder.length) setupTurn();
+    else { G.cur = 0; newRound(); beginTurn(); }
+  }
+
+  // ---------- Flow: rounds and events ----------
+  function newRound() {
+    G.round++;
+    G.dust = -1;
+    if (!G.evDeck.length) G.evDeck = shuffle(EVENT_DECK.concat(G.opts.marcianos ? OVNI_DECK : []).filter(function (e) { return !(e === "veta" && G.vetaDone); }));
+    var id = G.evDeck.pop();
+    if (id === "veta" && G.vetaDone) id = "calma";
+    if (G.round === 1) { G.evDeck.push(id); id = "calma"; }
+    G.event = { id: id, name: EVENTS[id].name, text: EVENTS[id].text };
+    applyEvent(id);
+    log("Ronda " + G.round + ": " + G.event.name + ".", false);
+    showBanner();
+    dirty = true;
+  }
+  function applyEvent(id) {
+    var withNum = G.hexes.map(function (h, i) { return i; }).filter(function (i) { return G.hexes[i].num > 0 && !G.hexes[i].fog; });
+    if (id === "tolvanera") {
+      var busy = withNum.filter(function (i) { return G.hexes[i].v.some(function (v) { return G.verts[v].b; }) && i !== G.chupa; });
+      G.dust = pick(busy.length ? busy : withNum);
+      G.event.text += " Le tocó a " + TILE[G.hexes[G.dust].type].name.toLowerCase() + " del " + G.hexes[G.dust].num + ".";
+    }
+    if (id === "arroyo") {
+      var a = pick(withNum), others = withNum.filter(function (i) { return G.hexes[i].num !== G.hexes[a].num; }), b = pick(others);
+      var t = G.hexes[a].num; G.hexes[a].num = G.hexes[b].num; G.hexes[b].num = t;
+      G.flash = { list: [a, b], until: performance.now() + 4000 };
+      G.event.text += " El " + G.hexes[b].num + " y el " + G.hexes[a].num + " se cambiaron.";
+    }
+    if (id === "veta") {
+      var m = G.hexes.findIndex(function (h) { return h.type === "medano" && !h.fog; });
+      if (m >= 0) { G.hexes[m].type = "mina"; G.hexes[m].num = pick([4, 5, 9, 10]); G.vetaDone = true; G.flash = { list: [m], until: performance.now() + 4000 }; G.event.text += " Ahora da cobre con el " + G.hexes[m].num + "."; }
+    }
+    if (id === "luces") moveOvni(2);
+    if (id === "senal") moveOvni(-1);
+    if (id === "fiesta") {
+      G.players.forEach(function (p) { var n = p.pueblos > 0 ? 2 : 1; for (var i = 0; i < n; i++) p.res[pick(RES)]++; });
+    }
+    if (id === "remesa") {
+      var v = G.players.map(function (p, i) { return vp(i); }), mn = Math.min.apply(null, v);
+      var who = [];
+      G.players.forEach(function (p, i) { if (v[i] === mn) { p.res[pick(RES)]++; p.res[pick(RES)]++; who.push(p.name); } });
+      G.event.text += " Le llegó a " + who.join(" y ") + ".";
+    }
+  }
+  function showBanner() { bannerText("Noticia de la ronda " + G.round, G.event.name, G.event.text); }
+  function bannerText(tag, name, text) {
+    var b = $("banner");
+    $("bnTag").textContent = tag;
+    $("bnName").textContent = name; $("bnText").textContent = text;
+    b.classList.remove("hidden", "show"); void b.offsetWidth; b.classList.add("show");
+    clearTimeout(showBanner.t);
+    showBanner.t = setTimeout(function () { b.classList.add("hidden"); }, FAST ? 30 : 3200);
+  }
+  $("banner").onclick = function () { $("banner").classList.add("hidden"); };
+
+  // ---------- Flow: turns ----------
+  function beginTurn() {
+    G.phase = "roll"; G.mode = null; G.played = false; G.freeRoads = 0; G.botTrades = 0; G.turnCount++;
+    if (P().bot) { render(); later(botAct); }
+    else withCover(G.cur, render);
+  }
+  function endTurn() {
+    if (G.winner >= 0) return;
+    G.mode = null; G.freeRoads = 0;
+    G.cur = (G.cur + 1) % G.players.length;
+    if (G.cur === 0) newRound();
+    beginTurn();
+  }
+  function next() { render(); if (G.winner < 0 && P().bot) later(botAct); }
+
+  function rollDice() {
+    if (G.phase !== "roll") return;
+    var a = 1 + Math.floor(Math.random() * 6), b = 1 + Math.floor(Math.random() * 6);
+    G.dice = [a, b];
+    animateDice();
+    var n = a + b;
+    log(P().name + " tira " + n + (a === b ? " (dobles)" : "") + ".");
+    if (a === b && G.opts.marcianos) moveOvni(1);
+    if (n === 7) {
+      toast("¡Siete! Despertó el chupacabras y trae hambre");
+      handleSeven(function () { startChupa("main"); });
+    } else {
+      produce(n);
+      G.phase = "main";
+      afterAction();
+      next();
+    }
+  }
+  function produce(n) {
+    var gains = G.players.map(function () { return {}; });
+    G.hexes.forEach(function (h, hi) {
+      var r = TILE[h.type].res;
+      if (h.num !== n || !r || hi === G.dust || h.fog) return;
+      var m = 1, e = evId();
+      if ((e === "sequia" && h.type === "milpa") || (e === "helada" && h.type === "pasto")) m = 0;
+      if ((e === "lluvias" && (h.type === "milpa" || h.type === "pasto")) || (e === "cobre" && h.type === "mina")) m = 2;
+      h.v.forEach(function (vi) {
+        var b = G.verts[vi].b; if (!b) return;
+        if (hi === G.chupa && P(b.p).oficio !== "curandera") return;
+        gains[b.p][r] = (gains[b.p][r] || 0) + b.lvl * m;
+      });
+    });
+    var any = false;
+    gains.forEach(function (g, pi) {
+      var p = P(pi);
+      if (p.oficio === "minero" && g.cobre) g.cobre++;
+      RES.forEach(function (r) { if (g[r]) { p.res[r] += g[r]; } });
+      var t = resList(g); if (t) { any = true; log(p.name + " recibe " + t + "."); }
+    });
+    if (!any) log("Nadie recibe nada.");
+    bumpHand = true;
+  }
+  function handleSeven(done) {
+    G.phase = "discard";
+    var list = [];
+    G.players.forEach(function (p, i) { if (total(p) > 7 && p.oficio !== "velador") list.push(i); });
+    var turnHuman = !P().bot ? G.cur : -1;
+    (function step(k) {
+      if (k >= list.length) {
+        if (turnHuman >= 0 && G.lastViewer !== turnHuman) withCover(turnHuman, done); else done();
+        return;
+      }
+      var pi = list[k], p = P(pi), n = Math.floor(total(p) / 2);
+      if (p.bot) { botDiscard(pi, n); step(k + 1); }
+      else withCover(pi, function () { discardModal(pi, n, function () { step(k + 1); }); });
+    })(0);
+  }
+  function startChupa(ret) {
+    G.phase = "chupa"; G.chupaReturn = ret;
+    if (P().bot) { render(); later(function () { botMoveChupa(); }); }
+    else { G.mode = "chupa"; render(); }
+  }
+  function placeChupa(hi) {
+    G.chupa = hi; G.mode = null; dirty = true;
+    var h = G.hexes[hi];
+    log(P().name + " le avienta el chupacabras a " + TILE[h.type].name.toLowerCase() + (h.num ? " del " + h.num : "") + ".");
+    var vic = [];
+    h.v.forEach(function (vi) { var b = G.verts[vi].b; if (b && b.p !== G.cur && vic.indexOf(b.p) < 0 && total(P(b.p)) > 0 && P(b.p).oficio !== "curandera") vic.push(b.p); });
+    if (!vic.length) return finishChupa();
+    if (vic.length === 1) { steal(vic[0]); return finishChupa(); }
+    if (P().bot) { vic.sort(function (a, b) { return vp(b) - vp(a) || total(P(b)) - total(P(a)); }); steal(vic[0]); return finishChupa(); }
+    openModal('<h2>¿A quién le robas?</h2><div class="answers">' + vic.map(function (v) {
+      return '<div class="answer"><span class="dot" style="color:' + INK + ';background:' + P(v).color + '"></span><span>' + esc(P(v).name) + " · " + total(P(v)) + ' cartas</span><button class="btn" data-v="' + v + '">Robar</button></div>';
+    }).join("") + "</div>");
+    $("sheet").querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { closeModal(); steal(+b.dataset.v); finishChupa(); }; });
+  }
+  function steal(vi) {
+    var n = evId() === "hambre" ? 2 : 1, got = [];
+    for (var i = 0; i < n; i++) {
+      var v = P(vi), pool = [];
+      RES.forEach(function (r) { for (var j = 0; j < v.res[r]; j++) pool.push(r); });
+      if (!pool.length) break;
+      var r = pick(pool); v.res[r]--; P().res[r]++; got.push(r);
+    }
+    var mine = humans() === 1 && (!P().bot || !P(vi).bot);
+    log(P().name + " le bajó " + got.length + " carta" + (got.length > 1 ? "s" : "") + " a " + P(vi).name + (mine && got.length ? " (" + got.map(function (r) { return RES_NAME[r].toLowerCase(); }).join(", ") + ")" : "") + ".");
+    bumpHand = true;
+  }
+  function finishChupa() { G.phase = G.chupaReturn; G.mode = null; afterAction(); next(); }
+
+  // ---------- Actions ----------
+  function buildRoad(ei) {
+    var p = P(), free = G.freeRoads > 0;
+    pay(p, costOf(G.cur, "camino"));
+    G.edges[ei].r = G.cur; p.caminos++;
+    if (free) G.freeRoads--;
+    explore([G.edges[ei].a, G.edges[ei].b]);
+    log(p.name + " hace un camino" + (free ? " gratis" : "") + ".");
+    if (G.freeRoads > 0 && (p.caminos >= LIMIT.camino || !validEdges(G.cur).length)) G.freeRoads = 0;
+    if (!(G.freeRoads > 0 && !p.bot) && !canBuild("camino")) G.mode = null;
+    if (G.freeRoads > 0 && !p.bot) G.mode = "camino";
+    afterAction();
+  }
+  function buildRancho(vi) {
+    var p = P(); pay(p, costOf(G.cur, "rancho"));
+    G.verts[vi].b = { p: G.cur, lvl: 1 }; p.ranchos++;
+    log(p.name + " levanta un rancho. Ya tiene dónde hacer la carnita asada.");
+    explore([vi]);
+    if (!canBuild("rancho")) G.mode = null;
+    afterAction();
+  }
+  function buildPueblo(vi) {
+    var p = P(); pay(p, costOf(G.cur, "pueblo"));
+    G.verts[vi].b.lvl = 2; p.ranchos--; p.pueblos++;
+    log(p.name + " vuelve un rancho en pueblo. Hasta con alberca.");
+    if (!canBuild("pueblo")) G.mode = null;
+    afterAction();
+  }
+  function explore(vs) {
+    var p = P(), found = [];
+    vs.forEach(function (vi) {
+      G.verts[vi].h.forEach(function (hi) {
+        var h = G.hexes[hi]; if (!h.fog) return;
+        h.fog = false; found.push(hi);
+        var r = TILE[h.type].res;
+        if (r) p.res[r]++;
+        log("¡" + p.name + " exploró tierra nueva! Es " + TILE[h.type].name.toLowerCase() + (h.num ? " del " + h.num : "") + (r ? " y se lleva 1 " + RES_NAME[r].toLowerCase() + " de regalo." : ". Pura arena, ni modo."), true);
+      });
+    });
+    if (found.length) { G.flash = { list: found, until: performance.now() + 2500 }; bumpHand = true; dirty = true; }
+  }
+  function defense(pi) { return P(pi).gorros + P(pi).army; }
+  function moveOvni(d) {
+    if (!G.opts.marcianos) return;
+    G.ovni = Math.max(0, G.ovni + d);
+    if (d > 0) log("El ovni se acerca: " + Math.min(G.ovni, OVNI_MAX) + " de " + OVNI_MAX + ".");
+    if (G.ovni >= OVNI_MAX) invasion();
+  }
+  function invasion() {
+    G.ovni = 0; G.invasions++;
+    var att = 0, def = 0;
+    G.players.forEach(function (p, i) { att += p.pueblos; def += defense(i); });
+    var title = "¡Llegaron los marcianos!", text;
+    if (!att) text = "Bajaron, vieron puros ranchitos, se tomaron una foto y se fueron. Qué oso.";
+    else if (def >= att) {
+      var mx = Math.max.apply(null, G.players.map(function (p, i) { return defense(i); }));
+      var top = G.players.map(function (p, i) { return i; }).filter(function (i) { return defense(i) === mx; });
+      if (top.length === 1) { P(top[0]).heroes++; text = "Gorros y vaqueros (" + def + ") contra " + att + " pueblos. ¡Los corrieron! " + P(top[0]).name + " es Héroe de la Zona del Silencio (+1 punto)."; }
+      else { top.forEach(function (i) { P(i).res.cobre++; }); text = "Gorros y vaqueros (" + def + ") contra " + att + " pueblos. ¡Los corrieron! Hubo empate de héroes, cada uno se lleva 1 cobre del ovni."; }
+    } else {
+      var owners = G.players.map(function (p, i) { return i; }).filter(function (i) { return P(i).pueblos > 0; });
+      var mn = Math.min.apply(null, owners.map(defense));
+      var lose = owners.filter(function (i) { return defense(i) === mn; });
+      lose.forEach(function (i) {
+        var vs = G.verts.map(function (v, k) { return k; }).filter(function (k) { return G.verts[k].b && G.verts[k].b.p === i && G.verts[k].b.lvl === 2; });
+        G.verts[pick(vs)].b.lvl = 1; P(i).pueblos--; P(i).ranchos++;
+      });
+      text = "Gorros y vaqueros (" + def + ") contra " + att + " pueblos. Perdimos. Se llevaron un pueblo de " + lose.map(function (i) { return P(i).name; }).join(" y ") + " (vuelve a rancho).";
+      dirty = true;
+    }
+    log(title + " " + text, true);
+    bannerText("Invasión " + G.invasions, title, text);
+    updateAwards();
+  }
+  function buyGorro() {
+    var p = P(); pay(p, costOf(G.cur, "gorro"));
+    p.gorros++;
+    log(p.name + " se hace un gorro de aluminio. Defensa: " + defense(G.cur) + ".");
+    afterAction();
+  }
+  function buyEncargo() {
+    var p = P(); pay(p, costOf(G.cur, "encargo"));
+    var t = G.encDeck.pop();
+    p.cards.push({ t: t, turn: G.turnCount });
+    log(p.name + " compra un encargo.");
+    if (!p.bot) toast("Te salió: " + ENC[t].name);
+    afterAction();
+  }
+  function canPlay(card) {
+    if (G.played || card.t === "capilla" || card.turn === G.turnCount) return false;
+    if (G.phase !== "main" && !(G.phase === "roll" && card.t === "vaquero")) return false;
+    if (card.t === "brecha") return P().caminos < LIMIT.camino && validEdges(G.cur).length > 0;
+    return true;
+  }
+  function playCard(idx, choice) {
+    var p = P(), card = p.cards[idx];
+    p.cards.splice(idx, 1); G.played = true;
+    log(p.name + " juega " + ENC[card.t].name + ".", true);
+    if (card.t === "vaquero") { p.army++; afterAction(); if (G.winner < 0) startChupa(G.phase); return; }
+    if (card.t === "brecha") { G.freeRoads = 2; if (!p.bot) G.mode = "camino"; }
+    if (card.t === "bonanza") { choice.forEach(function (r) { p.res[r]++; }); log(p.name + " toma " + choice.map(function (r) { return RES_NAME[r].toLowerCase(); }).join(" y ") + "."); }
+    if (card.t === "acaparar") {
+      var n = 0;
+      G.players.forEach(function (o, i) { if (i !== G.cur) { n += o.res[choice]; p.res[choice] += o.res[choice]; o.res[choice] = 0; } });
+      log(p.name + " se lleva " + n + " de " + RES_NAME[choice].toLowerCase() + ".");
+    }
+    bumpHand = true;
+    afterAction();
+  }
+  function bankTrade(give, get) {
+    var p = P(), r = rate(G.cur);
+    if (p.res[give] < r || give === get) return false;
+    p.res[give] -= r; p.res[get]++;
+    log(p.name + " cambia " + r + " " + RES_NAME[give].toLowerCase() + " por 1 " + RES_NAME[get].toLowerCase() + ".");
+    bumpHand = true;
+    afterAction();
+    return true;
+  }
+  function afterAction() {
+    updateAwards();
+    dirty = true;
+    var v = vp(G.cur, true);
+    if (G.winner < 0 && v >= G.goal && G.phase !== "setup") { G.winner = G.cur; G.phase = "over"; render(); showWinner(); return; }
+    render();
+  }
+
+  // ---------- Bots ----------
+  function later(fn) { setTimeout(function () { if (G && G.winner < 0) fn(); }, BOT_DELAY); }
+  function vertScore(pi, vi) {
+    var v = G.verts[vi], s = 0, kinds = {}, p = P(pi);
+    v.h.forEach(function (hi) {
+      var h = G.hexes[hi], r = TILE[h.type].res;
+      if (h.fog) { s += 1.6; return; }
+      if (!r) return;
+      var w = pips(h.num) * (hi === G.chupa ? 0.4 : 1);
+      if (r === "cobre" && p.oficio === "minero") w *= 1.3;
+      s += w; if (!kinds[r]) { kinds[r] = 1; s += 1.2; }
+    });
+    return s;
+  }
+  function botSetup() {
+    var pi = G.cur;
+    var vs = validVerts(pi, true);
+    vs.sort(function (a, b) { return vertScore(pi, b) - vertScore(pi, a); });
+    var vi = vs[Math.floor(Math.random() * Math.min(2, vs.length))];
+    placeSetupRancho(vi);
+    later(function () {
+      var es = validEdges(pi, vi);
+      placeSetupRoad(bestRoad(pi, es));
+    });
+  }
+  function bestRoad(pi, es) {
+    var best = es[0], bs = -1;
+    es.forEach(function (ei) {
+      var e = G.edges[ei];
+      var far = (G.verts[e.a].b && G.verts[e.a].b.p === pi) || G.verts[e.a].e.some(function (x) { return x !== ei && G.edges[x].r === pi; }) ? e.b : e.a;
+      var s = 0;
+      if (ranchoOk(pi, far, true)) s = vertScore(pi, far) + 2;
+      G.verts[far].adj.forEach(function (n) { if (ranchoOk(pi, n, true)) s = Math.max(s, vertScore(pi, n) * 0.75); });
+      s += Math.random() * 0.5;
+      if (s > bs) { bs = s; best = ei; }
+    });
+    return best;
+  }
+  function botGoal(pi) {
+    var p = P(pi);
+    if (p.pueblos < LIMIT.pueblo && p.ranchos > 0 && (p.res.cobre + p.res.maiz >= 3 || p.ranchos + p.pueblos >= 4)) return "pueblo";
+    if (p.ranchos < LIMIT.rancho && validVerts(pi).length) return "rancho";
+    if (p.ranchos + p.pueblos < 5 + LIMIT.pueblo && p.caminos < LIMIT.camino && p.ranchos < LIMIT.rancho) return "camino";
+    if (p.pueblos < LIMIT.pueblo && p.ranchos > 0) return "pueblo";
+    return "encargo";
+  }
+  function botAct() {
+    if (G.winner >= 0 || !P().bot) return;
+    var pi = G.cur, p = P();
+    if (G.phase === "roll") {
+      var vq = p.cards.findIndex(function (c) { return c.t === "vaquero" && canPlay(c); });
+      var blocked = G.hexes[G.chupa].v.some(function (v) { return G.verts[v].b && G.verts[v].b.p === pi; });
+      if (vq >= 0 && blocked) { playCard(vq); return; }
+      rollDice(); return;
+    }
+    if (G.phase !== "main") return;
+    if (botStep(pi)) { later(botAct); return; }
+    endTurn();
+  }
+  function botStep(pi) {
+    var p = P(pi);
+    // play a card
+    for (var i = 0; i < p.cards.length; i++) {
+      var c = p.cards[i];
+      if (!canPlay(c)) continue;
+      if (c.t === "vaquero" && (G.hexes[G.chupa].v.some(function (v) { return G.verts[v].b && G.verts[v].b.p === pi; }) || p.army >= 2)) { playCard(i); return true; }
+      if (c.t === "brecha") { playCard(i); return true; }
+      if (c.t === "bonanza") { playCard(i, needList(pi, 2)); return true; }
+      if (c.t === "acaparar") {
+        var best = RES[0], bn = -1;
+        RES.forEach(function (r) { var n = 0; G.players.forEach(function (o, j) { if (j !== pi) n += o.res[r]; }); if (n > bn) { bn = n; best = r; } });
+        if (bn >= 3) { playCard(i, best); return true; }
+      }
+    }
+    if (G.freeRoads > 0) { var fe = validEdges(pi); if (fe.length) { buildRoad(bestRoad(pi, fe)); return true; } G.freeRoads = 0; }
+    if (canBuild("pueblo")) {
+      var rs = ownRanchos(pi).sort(function (a, b) { return vertScore(pi, b) - vertScore(pi, a); });
+      buildPueblo(rs[0]); return true;
+    }
+    if (canBuild("rancho")) {
+      var vs = validVerts(pi).sort(function (a, b) { return vertScore(pi, b) - vertScore(pi, a); });
+      buildRancho(vs[0]); return true;
+    }
+    var goal = botGoal(pi);
+    if (canBuild("camino") && (goal === "camino" || (validVerts(pi).length === 0 && p.ranchos < LIMIT.rancho) || (p.res.madera >= 3 && p.res.adobe >= 3))) {
+      if (p.caminos < 13 || validVerts(pi).length === 0) { buildRoad(bestRoad(pi, validEdges(pi))); return true; }
+    }
+    if (canBuild("gorro") && G.ovni >= 3 && p.pueblos > 0 && defense(pi) <= Math.min.apply(null, G.players.map(function (o, i) { return o.pueblos > 0 ? defense(i) : 99; })) && defense(pi) < 4) { buyGorro(); return true; }
+    if (canBuild("encargo") && (goal === "encargo" || total(p) >= 7 || (goal === "rancho" && !has(p, COST.rancho) && p.res.cobre >= 2))) { buyEncargo(); return true; }
+    if (G.botTrades < 3 && botTrade(pi, goal)) { G.botTrades++; return true; }
+    return false;
+  }
+  function needList(pi, n) {
+    var p = P(pi), goal = botGoal(pi), cost = costOf(pi, goal === "encargo" ? "encargo" : goal), out = [];
+    RES.forEach(function (r) { var need = (cost[r] || 0) - p.res[r]; for (var i = 0; i < need && out.length < n; i++) out.push(r); });
+    while (out.length < n) out.push(pick(RES));
+    return out;
+  }
+  function botTrade(pi, goal) {
+    var p = P(pi), cost = costOf(pi, goal), r = rate(pi);
+    var need = RES.filter(function (x) { return (cost[x] || 0) > p.res[x]; });
+    if (!need.length) return false;
+    var missing = 0; need.forEach(function (x) { missing += cost[x] - p.res[x]; });
+    if (missing > 2) return false;
+    var spare = RES.filter(function (x) { return p.res[x] - (cost[x] || 0) >= r; }).sort(function (a, b) { return p.res[b] - p.res[a]; });
+    if (!spare.length) return false;
+    return bankTrade(spare[0], need[0]);
+  }
+  function botDiscard(pi, n) {
+    var p = P(pi), lost = {};
+    for (var i = 0; i < n; i++) {
+      var r = RES.slice().sort(function (a, b) { return p.res[b] - p.res[a]; })[0];
+      p.res[r]--; lost[r] = (lost[r] || 0) + 1;
+    }
+    log(p.name + " tira " + n + " cartas.");
+  }
+  function botMoveChupa() {
+    var pi = G.cur, best = -1, bs = -1e9;
+    G.hexes.forEach(function (h, hi) {
+      if (hi === G.chupa || h.fog) return;
+      var s = 0, mine = false;
+      h.v.forEach(function (vi) {
+        var b = G.verts[vi].b; if (!b) return;
+        if (b.p === pi) mine = true;
+        else if (P(b.p).oficio !== "curandera") s += b.lvl * (pips(h.num) + 1) * (1 + vp(b.p) * 0.15);
+      });
+      if (mine) s -= 20;
+      s += Math.random();
+      if (s > bs) { bs = s; best = hi; }
+    });
+    placeChupa(best);
+  }
+  function botAccepts(bi, give, get) {
+    // give: what the bot would receive; get: what the bot would hand over
+    var b = P(bi), gi = 0, ge = 0;
+    for (var r in get) { if (b.res[r] < get[r]) return false; ge += get[r]; }
+    for (r in give) gi += give[r];
+    if (gi < ge || !gi) return false;
+    var goal = botGoal(bi), cost = costOf(bi, goal);
+    for (r in get) if ((cost[r] || 0) > b.res[r] - get[r]) return gi > ge;
+    return true;
+  }
+
+  // ---------- Rendering: board ----------
+  var cv = $("board"), ctx = cv.getContext("2d"), dpr = 1, S = 40, OX = 0, OY = 0, CW = 0, CH = 0;
+  var dirty = true, bumpHand = false, cache = document.createElement("canvas"), hover = null;
+  function resize() {
+    var wrap = $("boardWrap");
+    var w = wrap.clientWidth - 6;
+    var maxH = Math.max(320, window.innerHeight - 110);
+    var R = G ? G.R : 2, WU = (2 * R + 1) * SQ3 + 1.2, HU = 3 * R + 3.3;
+    var ratio = HU / WU;
+    var cw = Math.min(w, maxH / ratio), ch = cw * ratio;
+    dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    cv.style.width = cw + "px"; cv.style.height = ch + "px";
+    CW = cw; CH = ch;
+    S = Math.min(cw / WU, ch / HU);
+    OX = cw / 2; OY = ch / 2;
+    cache.width = cv.width; cache.height = cv.height;
+    dirty = true;
+  }
+  window.addEventListener("resize", function () { if (G) resize(); });
+  function X(x) { return OX + x * S; }
+  function Y(y) { return OY + y * S; }
+
+  function drawStatic() {
+    var c = cache.getContext("2d");
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, CW, CH);
+    // mesa backdrop
+    c.save(); c.translate(OX, OY); c.rotate(PI / 6); hexPath(c, 0, 0, S * ((G.R + 0.5) * SQ3 + 0.62)); c.fillStyle = "#3b2618"; c.fill(); c.lineWidth = 4; c.strokeStyle = "#5a3a22"; c.stroke(); c.restore();
+    c.fillStyle = "rgba(255,229,0,.06)";
+    for (var i = 0; i < 70; i++) { var a = i * 2.4, rr = S * (1 + (i * 37 % 100) / 100 * (G.R * 1.5 + 0.6)); c.beginPath(); c.arc(OX + Math.cos(a) * rr, OY + Math.sin(a) * rr, 1.5, 0, PI * 2); c.fill(); }
+    G.hexes.forEach(function (h) { if (h.fog) drawFog(c, X(h.x), Y(h.y), S); else drawTile(c, h.type, X(h.x), Y(h.y), S, false); });
+    G.hexes.forEach(function (h, hi) {
+      if (hi === G.dust) {
+        hexPath(c, X(h.x), Y(h.y), S * 0.97); c.fillStyle = "rgba(196,140,80,.72)"; c.fill();
+        c.strokeStyle = "rgba(255,240,210,.8)"; c.lineWidth = S * 0.05; c.lineCap = "round";
+        for (var k = 0; k < 3; k++) { c.beginPath(); c.arc(X(h.x) + (k - 1) * S * 0.25, Y(h.y) - S * 0.35 + k * S * 0.12, S * (0.18 + k * 0.05), PI * 0.1, PI * 1.5); c.stroke(); }
+      }
+    });
+    G.edges.forEach(function (e) { if (e.r !== null) { var a = G.verts[e.a], b = G.verts[e.b]; drawRoad(c, X(a.x), Y(a.y), X(b.x), Y(b.y), S, P(e.r).color); } });
+    G.verts.forEach(function (v) { if (v.b) { if (v.b.lvl === 1) drawRancho(c, X(v.x), Y(v.y), S * 0.42, P(v.b.p).color); else drawPueblo(c, X(v.x), Y(v.y), S * 0.48, P(v.b.p).color); } });
+  }
+
+  function targets() {
+    if (!G || !isHumanTurn()) return null;
+    var pi = G.cur;
+    switch (G.mode) {
+      case "setupRancho": return { k: "v", ids: validVerts(pi, true) };
+      case "setupCamino": return { k: "e", ids: validEdges(pi, G.setupV) };
+      case "camino": return { k: "e", ids: validEdges(pi) };
+      case "rancho": return { k: "v", ids: validVerts(pi, false) };
+      case "pueblo": return { k: "v", ids: ownRanchos(pi) };
+      case "chupa": return { k: "h", ids: G.hexes.map(function (h, i) { return i; }).filter(function (i) { return i !== G.chupa && !G.hexes[i].fog; }) };
+    }
+    return null;
+  }
+  function tpos(t, id) {
+    if (t.k === "v") return G.verts[id];
+    if (t.k === "h") return G.hexes[id];
+    var e = G.edges[id], a = G.verts[e.a], b = G.verts[e.b];
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
+  function frame(t) {
+    requestAnimationFrame(frame);
+    if (!G || $("game").classList.contains("hidden")) return;
+    if (dirty) { drawStatic(); dirty = false; }
+    var c = ctx;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, cv.width, cv.height);
+    c.drawImage(cache, 0, 0);
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // number tokens (drawn live so swapped numbers can flash)
+    var fl = G.flash && t < G.flash.until ? G.flash.list : [];
+    G.hexes.forEach(function (h, hi) {
+      if (!h.num || h.fog) return;
+      var f = fl.indexOf(hi) >= 0 && Math.floor(t / 250) % 2 === 0;
+      var hot = G.dice && G.dice[0] + G.dice[1] === h.num && G.phase === "main";
+      if (hot) { c.save(); c.shadowColor = "#ffe500"; c.shadowBlur = S * 0.4; }
+      drawToken(c, h.num, X(h.x), Y(h.y) + S * 0.28, S, f);
+      if (hot) c.restore();
+    });
+    if (G.opts.marcianos) drawOvniTrack(c, t);
+    var ch = G.hexes[G.chupa];
+    drawChupa(c, X(ch.x) + S * 0.05, Y(ch.y) - S * 0.18, S * 0.62, t);
+    var tg = targets();
+    if (tg) {
+      var pulse = 0.5 + 0.5 * Math.sin(t / 180);
+      tg.ids.forEach(function (id) {
+        var p = tpos(tg, id), x = X(p.x), y = Y(p.y), on = hover && hover.k === tg.k && hover.id === id;
+        c.lineWidth = 3; c.strokeStyle = INK;
+        if (tg.k === "h") {
+          hexPath(c, x, y, S * (0.8 + pulse * 0.06)); c.lineWidth = on ? 7 : 4; c.strokeStyle = on ? "#ff2e88" : "rgba(255,229,0," + (0.5 + pulse * 0.5) + ")"; c.stroke();
+        } else {
+          var r = S * (tg.k === "v" ? 0.16 : 0.12) * (on ? 1.35 : 1 + pulse * 0.15);
+          c.fillStyle = on ? "#ff2e88" : "rgba(255,229,0,.92)";
+          c.beginPath(); c.arc(x, y, r, 0, PI * 2); c.fill(); c.stroke();
+        }
+      });
+    }
+  }
+  requestAnimationFrame(frame);
+
+  function pickTarget(ev) {
+    var tg = targets(); if (!tg) return null;
+    var rect = cv.getBoundingClientRect();
+    var ux = (ev.clientX - rect.left - OX) / S, uy = (ev.clientY - rect.top - OY) / S;
+    var best = null, bd = tg.k === "h" ? 0.85 : tg.k === "v" ? 0.42 : 0.36;
+    tg.ids.forEach(function (id) { var p = tpos(tg, id), d = Math.hypot(p.x - ux, p.y - uy); if (d < bd) { bd = d; best = id; } });
+    return best === null ? null : { k: tg.k, id: best };
+  }
+  cv.addEventListener("pointermove", function (ev) { hover = pickTarget(ev); cv.style.cursor = hover ? "pointer" : "default"; });
+  cv.addEventListener("pointerleave", function () { hover = null; });
+  cv.addEventListener("click", function (ev) {
+    var t = pickTarget(ev); if (!t) return;
+    hover = null;
+    switch (G.mode) {
+      case "setupRancho": placeSetupRancho(t.id); break;
+      case "setupCamino": placeSetupRoad(t.id); break;
+      case "camino": buildRoad(t.id); break;
+      case "rancho": buildRancho(t.id); break;
+      case "pueblo": buildPueblo(t.id); break;
+      case "chupa": placeChupa(t.id); break;
+    }
+  });
+
+  // ---------- Rendering: side panel ----------
+  var PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+  function drawDie(el, n) { var h = ""; for (var i = 0; i < 9; i++) h += '<i class="' + (n && PIPS[n].indexOf(i) >= 0 ? "on" : "") + '"></i>'; el.innerHTML = h; }
+  function animateDice() {
+    [0, 1].forEach(function (i) { var d = $("die" + i); d.classList.remove("roll"); void d.offsetWidth; d.classList.add("roll"); });
+  }
+  function costHtml(cost) {
+    var h = ""; RES.forEach(function (r) { for (var i = 0; i < (cost[r] || 0); i++) h += icon(r); });
+    return h || "<em>Gratis</em>";
+  }
+  function viewer() {
+    if (!P().bot) return G.cur;
+    if (G.lastViewer >= 0) return G.lastViewer;
+    var h = G.players.findIndex(function (p) { return !p.bot; });
+    return h;
+  }
+  function hintText() {
+    var p = P();
+    if (G.winner >= 0) return P(G.winner).name + " ganó.";
+    if (p.bot) return p.name + " está pensando…";
+    switch (G.mode) {
+      case "setupRancho": return "Toca una esquina para poner tu rancho.";
+      case "setupCamino": return "Ahora toca una orilla junto a tu rancho para el camino.";
+      case "camino": return G.freeRoads > 0 ? "Toca dónde va tu camino gratis (" + G.freeRoads + " más)." : "Toca una orilla para tu camino.";
+      case "rancho": return "Toca una esquina para tu rancho.";
+      case "pueblo": return "Toca uno de tus ranchos para hacerlo pueblo.";
+      case "chupa": return "Toca un terreno para mandar ahí al chupacabras.";
+    }
+    if (G.phase === "roll") return "Tira los dados.";
+    if (G.phase === "main") return "Construye, cambia o pasa el turno.";
+    return "Espérate tantito…";
+  }
+  function render() {
+    if (!G) return;
+    var p = P();
+    $("turnDot").style.background = p.color;
+    $("turnName").textContent = p.name + (p.bot ? " (máquina)" : "");
+    $("turnOficio").textContent = OFICIOS[p.oficio].name + ": " + OFICIOS[p.oficio].desc;
+    drawDie($("die0"), G.dice && G.dice[0]); drawDie($("die1"), G.dice && G.dice[1]);
+    $("hint").textContent = hintText();
+    $("ovniLine").classList.toggle("hidden", !G.opts.marcianos);
+    if (G.opts.marcianos) { var at = 0, df = 0; G.players.forEach(function (o, i) { at += o.pueblos; df += defense(i); }); $("ovniLine").textContent = "Ovni a " + (OVNI_MAX - G.ovni) + " pasos. Defensa " + df + " (gorros + vaqueros) contra " + at + " pueblos."; }
+    $("goalLine").textContent = "Gana quien llegue a " + G.goal + " puntos.";
+    if (G.event) { $("evTag").textContent = "Noticia de la ronda " + G.round; $("evName").textContent = G.event.name; $("evText").textContent = G.event.text; $("eventBox").classList.remove("hidden"); }
+    else { $("evTag").textContent = "Antes de empezar"; $("evName").textContent = "Repartiendo tierras"; $("evText").textContent = "Cada quien pone 2 ranchos con su camino. En la segunda vuelta recibes lo que da la tierra junto a tu rancho."; }
+
+    // hand
+    var vi = viewer();
+    if (vi >= 0) {
+      var v = P(vi);
+      $("handBox").classList.remove("hidden");
+      $("handTitle").textContent = vi === G.cur ? "Tu mano" : "Mano de " + v.name;
+      $("hand").innerHTML = RES.map(function (r) { return '<div class="res' + (v.res[r] ? "" : " zero") + (bumpHand && v.res[r] ? " bump" : "") + '">' + icon(r) + "<b>" + v.res[r] + "</b><small>" + RES_NAME[r] + "</small></div>"; }).join("");
+      $("cards").innerHTML = v.cards.map(function (c, i) {
+        var can = vi === G.cur && isHumanTurn() && canPlay(c) && !G.mode;
+        return '<div class="card"><div class="ct"><b>' + ENC[c.t].name + "</b><span>" + ENC[c.t].desc + "</span></div>" + (c.t === "capilla" ? "" : '<button class="btn" data-card="' + i + '"' + (can ? "" : " disabled") + ">Jugar</button>") + "</div>";
+      }).join("");
+      $("cards").querySelectorAll("[data-card]").forEach(function (b) { b.onclick = function () { onPlayCard(+b.dataset.card); }; });
+    } else $("handBox").classList.add("hidden");
+    bumpHand = false;
+
+    // actions
+    var my = isHumanTurn();
+    var A = [
+      ["roll", "Tirar dados", "", my && G.phase === "roll" && !G.mode, true],
+      ["camino", "Camino", costHtml(costOf(G.cur, "camino")), my && canBuild("camino")],
+      ["rancho", "Rancho", costHtml(costOf(G.cur, "rancho")), my && canBuild("rancho")],
+      ["pueblo", "Pueblo", costHtml(costOf(G.cur, "pueblo")), my && canBuild("pueblo")],
+      ["encargo", "Encargo", costHtml(costOf(G.cur, "encargo")), my && canBuild("encargo") && !G.mode],
+      ["gorro", "Gorro de aluminio", costHtml(costOf(G.cur, "gorro")), my && canBuild("gorro") && !G.mode],
+      ["trade", "Comerciar", "<em>Banco " + rate(G.cur) + " por 1 o con los demás</em>", my && G.phase === "main" && !G.mode],
+      ["end", "Pasar turno", "", my && G.phase === "main" && G.freeRoads === 0 && (!G.mode || ["camino", "rancho", "pueblo"].indexOf(G.mode) >= 0), true]
+    ];
+    if (!G.opts.marcianos) A.splice(5, 1);
+    if (G.phase === "roll" || G.phase === "setup") A.pop(); else A.shift();
+    $("actions").innerHTML = A.map(function (a) {
+      var pressed = G.mode === a[0];
+      return '<button class="act' + (a[4] ? " big" : "") + '" data-act="' + a[0] + '"' + (a[3] || pressed ? "" : " disabled") + ' aria-pressed="' + pressed + '"><b>' + (pressed ? "Cancelar" : a[1]) + '</b>' + (a[2] ? '<span class="cost">' + a[2] + "</span>" : "") + "</button>";
+    }).join("");
+    $("actions").querySelectorAll("[data-act]").forEach(function (b) { b.onclick = function () { onAction(b.dataset.act); }; });
+
+    // players
+    $("plist").innerHTML = G.players.map(function (o, i) {
+      var vis = vp(i, i === vi), hid = o.cards.length;
+      var badges = (G.roadHolder === i ? '<span class="badge">Camino Real</span>' : "") + (G.armyHolder === i ? '<span class="badge">Cuadrilla</span>' : "");
+      return '<div class="pl' + (i === G.cur ? " cur" : "") + '"><span class="dot" style="color:' + INK + ";background:" + o.color + '"></span><div><div class="nm">' + esc(o.name) + (o.bot ? " · máquina" : "") + '</div><div class="sub">' + OFICIOS[o.oficio].name + " · " + total(o) + " cartas · " + hid + " encargos · camino " + o.road + " · vaqueros " + o.army + (G.opts.marcianos ? " · gorros " + o.gorros : "") + (o.heroes ? " · héroe ×" + o.heroes : "") + "</div><div>" + badges + '</div></div><div class="vp">' + vis + "<small>puntos</small></div></div>";
+    }).join("");
+  }
+
+  function onAction(a) {
+    if (!isHumanTurn()) return;
+    if (a === "roll") return rollDice();
+    if (a === "end") { G.mode = null; return endTurn(); }
+    if (a === "trade") return tradeModal();
+    if (a === "encargo") return buyEncargo();
+    if (a === "gorro") return buyGorro();
+    if (G.mode === a) { if (G.freeRoads > 0) return; G.mode = null; return render(); }
+    G.mode = a; render();
+  }
+  function onPlayCard(i) {
+    var c = P().cards[i];
+    if (c.t === "bonanza") return pickResModal("Bonanza", "Elige 2 recursos.", 2, function (ch) { playCard(i, ch); });
+    if (c.t === "acaparar") return pickResModal("Acaparar", "¿Qué recurso te llevas de todos?", 1, function (ch) { playCard(i, ch[0]); });
+    playCard(i);
+  }
+
+  // ---------- Modals ----------
+  function openModal(html) { $("sheet").innerHTML = html; $("modal").classList.remove("hidden"); }
+  function closeModal() { $("modal").classList.add("hidden"); $("sheet").innerHTML = ""; }
+  function withCover(pi, cb) {
+    if (humans() > 1 && G.lastViewer !== pi) {
+      $("coverName").textContent = P(pi).name;
+      $("cover").classList.remove("hidden");
+      $("handBox").classList.add("hidden");
+      $("coverBtn").onclick = function () { $("cover").classList.add("hidden"); G.lastViewer = pi; cb(); render(); };
+    } else { if (!P(pi).bot) G.lastViewer = pi; cb(); }
+  }
+  function pickResModal(title, text, n, done) {
+    var sel = [];
+    function draw() {
+      openModal("<h2>" + title + "</h2><p>" + text + '</p><div class="picks">' + RES.map(function (r) {
+        var k = sel.filter(function (x) { return x === r; }).length;
+        return '<button class="pickres" data-r="' + r + '" aria-pressed="' + (k > 0) + '">' + icon(r) + RES_NAME[r] + (k > 1 ? " ×" + k : "") + "</button>";
+      }).join("") + '</div><div class="row"><button class="btn alt" id="mCancel">Cancelar</button><button class="btn" id="mOk"' + (sel.length === n ? "" : " disabled") + ">Listo</button></div>");
+      $("sheet").querySelectorAll("[data-r]").forEach(function (b) { b.onclick = function () { if (sel.length >= n) sel.shift(); sel.push(b.dataset.r); draw(); }; });
+      $("mCancel").onclick = closeModal;
+      $("mOk").onclick = function () { closeModal(); done(sel); };
+    }
+    draw();
+  }
+  function discardModal(pi, n, done) {
+    var p = P(pi), d = { madera: 0, adobe: 0, maiz: 0, ganado: 0, cobre: 0 };
+    function cnt() { var t = 0; RES.forEach(function (r) { t += d[r]; }); return t; }
+    function draw() {
+      openModal("<h2>¡El chupacabras!</h2><p><b>" + esc(p.name) + "</b>, tienes " + total(p) + " cartas. Tira " + n + '.</p><div class="steppers">' + RES.map(function (r) {
+        return '<div class="step">' + icon(r) + "<span>" + RES_NAME[r] + ' <span class="have">tienes ' + p.res[r] + '</span></span><button data-m="' + r + '"' + (d[r] ? "" : " disabled") + '>−</button><output>' + d[r] + '</output><button data-p="' + r + '"' + (d[r] < p.res[r] && cnt() < n ? "" : " disabled") + ">+</button></div>";
+      }).join("") + '</div><button class="btn wide" id="mOk"' + (cnt() === n ? "" : " disabled") + ">Tirar " + cnt() + " de " + n + "</button>");
+      $("sheet").querySelectorAll("[data-m]").forEach(function (b) { b.onclick = function () { d[b.dataset.m]--; draw(); }; });
+      $("sheet").querySelectorAll("[data-p]").forEach(function (b) { b.onclick = function () { d[b.dataset.p]++; draw(); }; });
+      $("mOk").onclick = function () { RES.forEach(function (r) { p.res[r] -= d[r]; }); log(p.name + " tira " + n + " cartas."); closeModal(); render(); done(); };
+    }
+    draw();
+  }
+  function tradeModal() {
+    var p = P(), give = {}, get = {}, bGive = null, bGet = null, offer = null;
+    RES.forEach(function (r) { give[r] = 0; get[r] = 0; });
+    function sum(o) { var t = 0; RES.forEach(function (r) { t += o[r]; }); return t; }
+    function draw() {
+      var r8 = rate(G.cur);
+      var h = "<h2>Comerciar</h2><h3>Con el banco: " + r8 + " por 1</h3><p class=\"muted\">Das</p><div class=\"picks\">" + RES.map(function (r) {
+        return '<button class="pickres" data-bg="' + r + '" aria-pressed="' + (bGive === r) + '"' + (p.res[r] >= r8 ? "" : " disabled") + ">" + icon(r) + "<em>tienes " + p.res[r] + "</em></button>";
+      }).join("") + '</div><p class="muted">Recibes</p><div class="picks">' + RES.map(function (r) {
+        return '<button class="pickres" data-bt="' + r + '" aria-pressed="' + (bGet === r) + '"' + (r === bGive ? " disabled" : "") + ">" + icon(r) + RES_NAME[r] + "</button>";
+      }).join("") + '</div><button class="btn wide" id="bankGo"' + (bGive && bGet && bGive !== bGet ? "" : " disabled") + ">Cambiar " + r8 + " por 1</button>";
+      h += '<h3>Con los demás</h3><div class="steppers">' + RES.map(function (r) {
+        return '<div class="step">' + icon(r) + '<span>Das <span class="have">tienes ' + p.res[r] + '</span></span><button data-gm="' + r + '"' + (give[r] ? "" : " disabled") + '>−</button><output>' + give[r] + '</output><button data-gp="' + r + '"' + (give[r] < p.res[r] ? "" : " disabled") + ">+</button></div>";
+      }).join("") + "</div><div class=\"steppers\">" + RES.map(function (r) {
+        return '<div class="step">' + icon(r) + '<span>Pides</span><button data-tm="' + r + '"' + (get[r] ? "" : " disabled") + '>−</button><output>' + get[r] + '</output><button data-tp="' + r + '">+</button></div>';
+      }).join("") + '</div><button class="btn wide" id="offerGo"' + (sum(give) && sum(get) ? "" : " disabled") + ">Ofrecer</button>";
+      if (offer) {
+        h += '<div class="answers">' + offer.map(function (o) {
+          var q = P(o.i);
+          var right = o.ok === true ? '<button class="btn" data-acc="' + o.i + '">Cerrar trato</button>' : o.ok === false ? "<b>No le entra</b>" : '<button class="btn alt" data-yes="' + o.i + '">Acepto</button>';
+          return '<div class="answer"><span class="dot" style="color:' + INK + ";background:" + q.color + '"></span><span>' + esc(q.name) + "</span>" + right + "</div>";
+        }).join("") + "</div>";
+      }
+      h += '<button class="btn alt wide" id="mClose">Listo</button>';
+      openModal(h);
+      var S$ = $("sheet");
+      S$.querySelectorAll("[data-bg]").forEach(function (b) { b.onclick = function () { bGive = b.dataset.bg; if (bGet === bGive) bGet = null; draw(); }; });
+      S$.querySelectorAll("[data-bt]").forEach(function (b) { b.onclick = function () { bGet = b.dataset.bt; draw(); }; });
+      $("bankGo").onclick = function () { bankTrade(bGive, bGet); if (p.res[bGive] < rate(G.cur)) bGive = null; offer = null; draw(); };
+      function ch(sel, obj, d) { S$.querySelectorAll("[" + sel + "]").forEach(function (b) { b.onclick = function () { obj[b.getAttribute(sel)] += d; offer = null; draw(); }; }); }
+      ch("data-gm", give, -1); ch("data-gp", give, 1); ch("data-tm", get, -1); ch("data-tp", get, 1);
+      $("offerGo").onclick = function () {
+        offer = G.players.map(function (q, i) { return i; }).filter(function (i) { return i !== G.cur; }).map(function (i) {
+          var q = P(i), can = RES.every(function (r) { return q.res[r] >= get[r]; });
+          return { i: i, ok: !can ? false : q.bot ? botAccepts(i, give, get) : null };
+        });
+        draw();
+      };
+      S$.querySelectorAll("[data-yes]").forEach(function (b) { b.onclick = function () { offer.forEach(function (o) { if (o.i === +b.dataset.yes) o.ok = true; }); draw(); }; });
+      S$.querySelectorAll("[data-acc]").forEach(function (b) {
+        b.onclick = function () {
+          var q = P(+b.dataset.acc);
+          RES.forEach(function (r) { p.res[r] -= give[r]; q.res[r] += give[r]; q.res[r] -= get[r]; p.res[r] += get[r]; give[r] = 0; get[r] = 0; });
+          log(p.name + " hace trato con " + q.name + ".");
+          offer = null; bumpHand = true; afterAction(); draw();
+        };
+      });
+      $("mClose").onclick = function () { closeModal(); render(); };
+    }
+    draw();
+  }
+  function showWinner() {
+    var rows = G.players.map(function (p, i) { return { p: p, v: vp(i, true) }; }).sort(function (a, b) { return b.v - a.v; });
+    log(P(G.winner).name + " ganó la Tierra Bronca.", true);
+    openModal('<span class="stamp">¡' + esc(P(G.winner).name) + ' ganó!</span><p>Se quedó con el desierto en ' + G.round + ' rondas.</p><table class="scores">' + rows.map(function (r) {
+      return "<tr><td>" + esc(r.p.name) + " · " + r.p.ranchos + " ranchos, " + r.p.pueblos + " pueblos</td><td>" + r.v + "</td></tr>";
+    }).join("") + '</table><div class="row"><button class="btn alt" id="mSee">Ver tablero</button><button class="btn" id="mAgain">Otra vez</button></div>');
+    $("mSee").onclick = closeModal;
+    $("mAgain").onclick = function () { closeModal(); newGame(lastCfg, lastOpts); };
+  }
+
+  // ---------- Setup screen ----------
+  var count = 2, rows = [], lastCfg = null, lastOpts = null, exp = { grande: false, marcianos: true };
+  for (var i = 0; i < 6; i++) rows.push({ name: DEFAULT_NAMES[i], bot: i > 0, oficio: "azar" });
+  function drawSetup() {
+    $("countBtns").innerHTML = [2, 3, 4, 5, 6].map(function (n) { return '<button class="toggle" data-n="' + n + '" aria-pressed="' + (n === count) + '">' + n + "</button>"; }).join("");
+    if (count > 4) exp.grande = true;
+    $("expBtns").innerHTML = [["grande", "Tierra Grande", "Mapa más grande con orilla sin explorar. Quien llega primero se lleva un regalito. Para 5 o 6 jugadores es obligatorio. Se gana con 12."], ["marcianos", "Los Marcianos", "Cada vez que salen dados iguales, el ovni se acerca. Si llega y hay más pueblos que gorros de aluminio y vaqueros, se llevan un pueblo."]].map(function (e) {
+      var locked = e[0] === "grande" && count > 4;
+      return '<button class="exp" data-exp="' + e[0] + '" aria-pressed="' + exp[e[0]] + '"' + (locked ? " disabled" : "") + "><b>" + (exp[e[0]] ? "✓ " : "") + e[1] + "</b><span>" + e[2] + "</span></button>";
+    }).join("");
+    $("expBtns").querySelectorAll("[data-exp]").forEach(function (b) { b.onclick = function () { exp[b.dataset.exp] = !exp[b.dataset.exp]; drawSetup(); }; });
+    $("countBtns").querySelectorAll("[data-n]").forEach(function (b) { b.onclick = function () { count = +b.dataset.n; drawSetup(); }; });
+    var opts = '<option value="azar">Oficio al azar</option>' + OFICIO_IDS.map(function (o) { return '<option value="' + o + '">' + OFICIOS[o].name + ": " + OFICIOS[o].desc + "</option>"; }).join("");
+    $("playerRows").innerHTML = rows.slice(0, count).map(function (r, i) {
+      return '<div class="prow"><span class="swatch" style="background:' + COLORS[i].c + '"></span><input data-i="' + i + '" value="' + esc(r.name) + '" maxlength="14" aria-label="Nombre del jugador ' + (i + 1) + '"><button class="toggle" data-bot="' + i + '" aria-pressed="' + !r.bot + '">' + (r.bot ? "Máquina" : "Persona") + '</button><select data-of="' + i + '" aria-label="Oficio">' + opts.replace('value="' + r.oficio + '"', 'value="' + r.oficio + '" selected') + "</select></div>";
+    }).join("");
+    $("playerRows").querySelectorAll("input").forEach(function (el) { el.oninput = function () { rows[+el.dataset.i].name = el.value; }; });
+    $("playerRows").querySelectorAll("[data-bot]").forEach(function (b) { b.onclick = function () { var r = rows[+b.dataset.bot]; r.bot = !r.bot; drawSetup(); }; });
+    $("playerRows").querySelectorAll("select").forEach(function (s) { s.onchange = function () { rows[+s.dataset.of].oficio = s.value; }; });
+  }
+  function startFromSetup() {
+    var cfg = rows.slice(0, count).map(function (r, i) { return { name: (r.name || "").trim() || DEFAULT_NAMES[i], bot: r.bot, oficio: r.oficio }; });
+    var free = shuffle(OFICIO_IDS.filter(function (o) { return !cfg.some(function (c) { return c.oficio === o; }); }));
+    cfg.forEach(function (c) { if (c.oficio === "azar") c.oficio = free.pop() || pick(OFICIO_IDS); });
+    lastCfg = cfg; lastOpts = { grande: exp.grande || count > 4, marcianos: exp.marcianos };
+    newGame(cfg, lastOpts);
+  }
+  $("startBtn").onclick = startFromSetup;
+  $("quitBtn").onclick = function () {
+    openModal('<h2>¿Salir?</h2><p>Se pierde la partida.</p><div class="row"><button class="btn alt" id="mNo">Seguir jugando</button><button class="btn" id="mYes">Salir</button></div>');
+    $("mNo").onclick = closeModal;
+    $("mYes").onclick = function () { closeModal(); G = null; $("game").classList.add("hidden"); $("setup").classList.remove("hidden"); $("cover").classList.add("hidden"); };
+  };
+
+  makeIcons();
+  $("costList").innerHTML = [["Camino", "camino"], ["Rancho (1 punto)", "rancho"], ["Pueblo (2 puntos)", "pueblo"], ["Encargo (carta sorpresa)", "encargo"], ["Gorro de aluminio (con Los Marcianos)", "gorro"]].map(function (c) {
+    var h = ""; RES.forEach(function (r) { for (var i = 0; i < (COST[c[1]][r] || 0); i++) h += icon(r, "ico"); });
+    return "<span>" + h + "</span><span>" + c[0] + "</span>";
+  }).join("");
+  drawSetup();
+
+  if (params.has("bots")) {
+    count = Math.min(6, Math.max(2, +params.get("bots") || 4));
+    exp.grande = params.has("grande"); exp.marcianos = !params.has("sinovni");
+    rows.forEach(function (r) { r.bot = true; });
+    startFromSetup();
+  }
+})();
+</script>
+</body>
+</html>
