@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Altépetl</title>
-<meta name="description" content="Pirámides, chismes y fuego nuevo. Funda aldeas, súbelas a ciudades y gánale el valle a tus compas.">
+<meta name="description" content="Juego de construir aldeas y ciudades en el México antiguo, para jugar con los compas en un solo aparato.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Chivo:wght@400;700;900&display=swap" rel="stylesheet">
@@ -199,7 +199,7 @@ ul.rules b { font-weight: 900; }
 <main id="setup">
   <div class="kicker"><a href="../">← Juegos</a><span>De 2 a 6 · Un solo aparato</span></div>
   <h1>Al<span class="pop">tépetl</span></h1>
-  <p class="lead">Pirámides, chismes y fuego nuevo. Junta madera, barro, maíz, algodón y obsidiana, funda aldeas, súbelas a ciudades con pirámide y gánale el valle a tus compas. Cuidado con el Nahual.</p>
+  <p class="lead">Funda aldeas en el valle, hazlas ciudades con pirámide y quédate con el señorío antes que tus compas. El Nahual se va a meter. Siempre se mete.</p>
 
   <section class="panel">
     <h3>¿Cuántos juegan?</h3>
@@ -221,21 +221,16 @@ ul.rules b { font-weight: 900; }
       <li>Cada quien pone <b>2 aldeas</b> y <b>2 calzadas</b> para empezar.</li>
       <li>En tu turno tiras los dados. Cada terreno con ese número le da su recurso a las aldeas y ciudades que lo tocan.</li>
       <li>Gasta recursos para construir, cambia con el banco o con los demás.</li>
-      <li>Si sale <b>7</b> se aparece el Nahual: quien tenga más de 7 cartas tira la mitad, y tú lo mueves para frenar un terreno y robar una carta.</li>
+      <li>Si sale <b>7</b> se aparece el Nahual. Quien tenga más de 7 cartas tira la mitad. Luego tú lo mandas a un terreno, que deja de producir, y le robas una carta a alguien de ahí.</li>
       <li>Aldea 1 punto, ciudad 2, Gran Calzada 2 (5 caminos seguidos o más), Ejército Águila 2 (3 guerreros águila o más). La meta depende de las expansiones.</li>
     </ul>
-    <h3>Lo que lo hace distinto</h3>
-    <ul class="rules">
-      <li><b>Noticias de la ronda.</b> Cada ronda pasa algo: Tláloc de malas, día de tianguis, eclipse, fiesta de Xochipilli y más.</li>
-      <li><b>El mapa se mueve.</b> Un temblor revuelve los números y puede nacer un volcán en el malpaís.</li>
-      <li><b>Oficios.</b> Cada quien tiene un poder: el Tameme, el Tallador de Obsidiana, la Pochteca, la Ticitl, el Arquitecto o el Astrónomo.</li>
-    </ul>
+    <h3>Lo que cambia</h3>
+    <p>Cada ronda sale una noticia. A veces Tláloc anda de malas y no hay maíz, a veces es día de tianguis y todo sale más barato. El mapa tampoco se queda quieto. Un temblor puede revolver los números, y en el malpaís puede nacer un volcán.</p>
+    <p>Además cada quien juega con un oficio. La Pochteca regatea mejor con el banco, el Astrónomo nunca tira cartas con el 7, y el Arquitecto hace ciudades más baratas aunque ninguna le quede derecha.</p>
     <h3>Expansiones</h3>
-    <ul class="rules">
-      <li><b>El Lago.</b> Un lago con una isla en medio. Llegas con canoas, y quien funde la primera aldea en la isla funda Tenochtitlan (+2). La orilla del mapa está sin explorar: quien llega primero se lleva un regalito. Hasta 6 jugadores.</li>
-      <li><b>Pescadores.</b> El lago tiene números y da pescado. El pescado se cambia por favores: correr al Nahual, robar, recursos, canoas o códices. Y por ahí nada un ajolote de la suerte.</li>
-      <li><b>Señoríos y Jaguares.</b> Las ciudades dan amate, huipiles y navajas. Con eso subes tu Calmécac, tu Tianguis y tu Casa de Guerreros. Cada vez que salen dobles, avanza el calendario. Al terminar el ciclo hay que prender el Fuego Nuevo: si hay más ciudades que guerreros jaguar, se apagan ciudades.</li>
-    </ul>
+    <p>El Lago pone un lago con una isla en medio. Al agua entras en canoa, y quien funde la primera aldea en la isla funda Tenochtitlan y gana 2 puntos. La orilla del mapa empieza tapada, y quien llega primero a un terreno tapado se lleva uno de ese recurso. Con El Lago pueden jugar hasta 6.</p>
+    <p>Pescadores le pone números al lago, y el lago da pescado. El pescado lo cambias por favores, como correr al Nahual o sacar un códice. También nada por ahí un ajolote que vale 1 punto, pero con cada 7 se va con quien vaya perdiendo.</p>
+    <p>Señoríos y Jaguares hace que las ciudades den amate, huipiles y navajas, y con eso subes de nivel tu Calmécac, tu Tianguis o tu Casa de Guerreros. Cada vez que alguien saca dobles, el calendario avanza un día. Al final hay que prender el Fuego Nuevo. Si hay más ciudades que guerreros, a quien menos defendió se le apaga una ciudad.</p>
     <h3>Lo que cuesta</h3>
     <div class="costs" id="costList"></div>
   </section>
@@ -336,7 +331,7 @@ ul.rules b { font-weight: 900; }
   var OFICIOS = {
     tameme: { name: "El Tameme", desc: "Carga todo en la espalda. Tus calzadas y canoas cuestan solo 1 madera." },
     tallador: { name: "El Tallador", desc: "Cada vez que tus volcanes dan, sacas 1 obsidiana extra." },
-    pochteca: { name: "La Pochteca", desc: "Comerciante de largo camino. Cambias con el banco 1 más barato." },
+    pochteca: { name: "La Pochteca", desc: "Le cambias al banco un punto más barato. Regateas hasta con tu mamá." },
     ticitl: { name: "La Ticitl", desc: "Curandera con hierbas raras. El Nahual no te roba ni frena tus casas." },
     arquitecto: { name: "El Arquitecto", desc: "Ya hizo tres pirámides y ninguna derecha. Tus ciudades cuestan 1 obsidiana menos." },
     astronomo: { name: "El Astrónomo", desc: "Cuando sale 7 nunca tiras cartas. Estaba viendo las estrellas." }
@@ -344,7 +339,7 @@ ul.rules b { font-weight: 900; }
   var OFICIO_IDS = Object.keys(OFICIOS);
   var ENC = {
     aguila: { name: "Guerrero Águila", desc: "Corre al Nahual a otro terreno y roba 1 carta ahí. Cuenta para tu ejército." },
-    templo: { name: "Templo chiquito", desc: "Vale 1 punto. Los dioses están contentos. Nadie más lo ve." },
+    templo: { name: "Templo chiquito", desc: "Vale 1 punto y nadie más sabe que lo tienes." },
     tamemes: { name: "Cuadrilla de tamemes", desc: "Construye 2 calzadas o canoas gratis." },
     tributo: { name: "Tributo", desc: "Toma 2 recursos del banco, los que quieras." },
     chisme: { name: "Chisme del tianguis", desc: "Elige un recurso. Todos te dan los que tengan de ese, de pura vergüenza." }
@@ -358,7 +353,7 @@ ul.rules b { font-weight: 900; }
     eclipse: { name: "Eclipse", text: "Todos se escondieron debajo del petate. Un terreno no produce esta ronda." },
     temblor: { name: "Tembló", text: "Se cayeron los letreros. Dos números cambian de lugar para siempre." },
     volcan: { name: "¡Nació un volcán!", text: "Salió de la nada en la parcela de un señor. El malpaís ahora es volcán." },
-    fiesta: { name: "Fiesta de Xochipilli", text: "Flores, música y tamales. Todos reciben 1 recurso al azar. Quien tiene ciudad recibe 2." },
+    fiesta: { name: "Fiesta de Xochipilli", text: "Hubo tamales para todos. Todos reciben 1 recurso al azar. Quien tiene ciudad recibe 2." },
     hambre: { name: "Nahual con antojo", text: "Esta ronda el Nahual roba 2 cartas en vez de 1." },
     pochtecas: { name: "Llegaron los pochtecas", text: "Esta ronda calzadas y canoas cuestan solo 1 madera." },
     tributo: { name: "Tributo del señorío vecino", text: "Quien va hasta abajo en puntos recibe 2 recursos al azar." },
@@ -780,9 +775,9 @@ ul.rules b { font-weight: 900; }
     $("game").classList.remove("hidden");
     $("log").innerHTML = "";
     log("Se repartió el valle. A fundar aldeas.");
-    if (opts.lago) log("El Lago: la isla del centro espera a quien funde Tenochtitlan (+2). La orilla está sin explorar.");
-    if (opts.pesca) log("Pescadores: el lago da pescado. Y anda suelto un ajolote de la suerte.");
-    if (opts.senorios) log("Señoríos: cada vez que salen dobles, avanza el calendario del Fuego Nuevo.");
+    if (opts.lago) log("Hay un lago. La isla del centro espera a quien funde Tenochtitlan (+2), y la orilla del mapa sigue tapada.");
+    if (opts.pesca) log("El lago da pescado, y anda suelto un ajolote de la suerte.");
+    if (opts.senorios) log("Cada vez que salgan dobles, el calendario del Fuego Nuevo avanza un día.");
     resize();
     setupTurn();
   }
@@ -1088,7 +1083,7 @@ ul.rules b { font-weight: 900; }
   function moveFuego(d) {
     if (!G.opts.senorios) return;
     G.fuego = Math.max(0, G.fuego + d);
-    if (d > 0) log("El calendario avanza: " + Math.min(G.fuego, FUEGO_MAX) + " de " + FUEGO_MAX + ".");
+    if (d > 0) log("El calendario va en " + Math.min(G.fuego, FUEGO_MAX) + " de " + FUEGO_MAX + ".");
     if (G.fuego >= FUEGO_MAX) newFire();
   }
   function newFire() {
@@ -1113,7 +1108,7 @@ ul.rules b { font-weight: 900; }
       text = "Guerreros (" + def + ") contra " + att + " ciudades. No alcanzó. A " + lose.map(function (i) { return P(i).name; }).join(" y ") + " se le apagó el fogón y una ciudad vuelve a aldea.";
       dirty = true;
     }
-    log(title + ": " + text, true);
+    log(title + ". " + text, true);
     bannerText("Ciclo " + G.fuegos, title, text);
     updateAwards();
   }
@@ -1220,13 +1215,13 @@ ul.rules b { font-weight: 900; }
     var t = G.encDeck.pop();
     p.cards.push({ t: t, turn: G.turnCount });
     log(p.name + " se lleva un códice.");
-    if (!p.bot) toast("Te salió: " + ENC[t].name);
+    if (!p.bot) toast("Te salió " + ENC[t].name);
     afterAction();
   }
   function buyJaguar() {
     var p = P(); pay(p, costOf(G.cur, "jaguar"));
     p.jaguars++;
-    log(p.name + " entrena un guerrero jaguar. Defensa: " + defense(G.cur) + ".");
+    log(p.name + " entrena un guerrero jaguar. Ya tiene " + defense(G.cur) + " de defensa.");
     afterAction();
   }
   function improve(k) {
@@ -1260,7 +1255,7 @@ ul.rules b { font-weight: 900; }
   function useFish(id, choice) {
     var p = P(), f = FISH.filter(function (x) { return x.id === id; })[0];
     p.fish -= f.n;
-    log(p.name + " cambia " + f.n + " pescados: " + f.name + ".");
+    log(p.name + " usa " + f.n + " pescados para " + f.name.toLowerCase() + ".");
     if (id === "ahuyentar") { startChupa(G.phase, true); return; }
     if (id === "robar") { chooseVictim(choice, function () { afterAction(); }); return; }
     if (id === "recurso") { p.res[choice]++; bumpHand = true; }
@@ -1829,9 +1824,9 @@ ul.rules b { font-weight: 900; }
   var count = 2, rows = [], lastCfg = null, lastOpts = null, exp = { lago: true, pesca: false, senorios: false };
   for (var i = 0; i < 6; i++) rows.push({ name: DEFAULT_NAMES[i], bot: i > 0, oficio: "azar" });
   var EXP = [
-    ["lago", "El Lago", "Un lago con una isla en medio y canoas para cruzarlo. La primera aldea en la isla funda Tenochtitlan (+2). La orilla está sin explorar. Necesario para 5 o 6. Suma 2 a la meta."],
-    ["pesca", "Pescadores", "El lago da pescado y el pescado se cambia por favores. Hay un ajolote de la suerte que vale 1 punto. Necesita El Lago."],
-    ["senorios", "Señoríos y Jaguares", "Ciudades que dan amate, huipiles y navajas, mejoras de ciudad, guerreros jaguar y el Fuego Nuevo. Suma 3 a la meta."]
+    ["lago", "El Lago", "Un lago con una isla en medio. Llegas en canoa, y quien funde ahí primero gana 2 puntos. La orilla empieza tapada. Hace falta para 5 o 6 jugadores, y la meta sube 2."],
+    ["pesca", "Pescadores", "El lago da pescado, y el pescado se cambia por favores. Hay un ajolote de la suerte que vale 1 punto. Se juega con El Lago."],
+    ["senorios", "Señoríos y Jaguares", "Las ciudades dan amate, huipiles y navajas para subir de nivel. Los guerreros jaguar cuidan el Fuego Nuevo. La meta sube 3."]
   ];
   function drawSetup() {
     if (count > 4) exp.lago = true;
