@@ -5,7 +5,7 @@ Little web games to play with friends. Plain HTML, CSS and JavaScript. No build 
 ## Games
 
 - `madrazos/` Madrazos Patrios. Online platform fighter for 2 to 4 players with historical Mexican figures. Each player's live webcam becomes the face of their fighter.
-- `altepetl/` Altépetl. Hex map building and trading game set in early Mesoamerica, for 2 to 6 players on one device, with optional computer players. Round events, a moving Nahual, player powers (oficios), and three optional expansions: El Lago (lake, island and canoes, hidden map edge), Pescadores (fishing and favors) and Señoríos y Jaguares (city goods, city upgrades, jaguar warriors and the New Fire). Add `?bots=4&rapido&lago&pesca&senorios` to the URL to watch computer players play a fast game.
+- `labola/` La Bola. Hex map building and trading game set in the Mexican Revolution, for 2 to 6 players on one device, with optional computer players. Each player gets a character portrait for their oficio, and the board has small animations (the Cacique walks between tiles, resources pop out when the dice hit, ranchos smoke). Round events, a moving Cacique, and three optional expansions: El Tren (desert, train tracks, the Capital and a hidden map edge), Los Corridos (songs you trade for favors) and Generales y Dorados (town goods, town upgrades, Dorados and the federal army). Add `?bots=4&rapido&lago&pesca&senorios` to the URL to watch computer players play a fast game. The old `altepetl/` link redirects here.
 - `chilango/` ¿Quién es el Chilango? In-person bluffing game for 3 to 12 players on one shared phone.
 
 ## Hosting

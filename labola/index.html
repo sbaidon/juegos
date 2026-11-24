@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Bola</title>
+<meta name="description" content="Juego de construir ranchos y pueblos en plena Revolución, para jugar con los compas en un solo aparato.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Chivo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: the same cartel de baile paper as the other games, with the board
+   sitting on a dark stone slab so the hand-drawn tiles pop. */
+:root {
+  color-scheme: light;
+  --fluo-yellow: #ffe500;
+  --fluo-orange: #ff8a00;
+  --fluo-pink: #ff2e88;
+  --ink: #15110d;
+  --paper: #fff9e3;
+  --win: #0a8f55;
+  --font-display: "Bowlby One", "Arial Black", Impact, sans-serif;
+  --font-body: "Chivo", "Helvetica Neue", Arial, sans-serif;
+  --hard: 5px 5px 0 var(--ink);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: linear-gradient(172deg, var(--fluo-yellow) 0%, var(--fluo-yellow) 22%, var(--fluo-orange) 60%, var(--fluo-pink) 100%) fixed;
+  background-color: var(--fluo-orange);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.4;
+}
+.hidden { display: none !important; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+#cover { background: var(--ink); }
+h1, h2, .display { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; margin: 0; line-height: 1; text-wrap: balance; }
+h1 { font-size: clamp(42px, 12vw, 76px); line-height: 1.02; }
+.pop { color: var(--paper); text-shadow: 4px 4px 0 var(--ink), -1px -1px 0 var(--ink), 1px -1px 0 var(--ink), -1px 1px 0 var(--ink); }
+p { margin: 0; }
+.kicker { font-weight: 900; text-transform: uppercase; letter-spacing: 0.12em; font-size: 13px; border-top: 4px solid var(--ink); border-bottom: 2px solid var(--ink); padding: 6px 0; display: flex; justify-content: space-between; gap: 12px; }
+.kicker a { color: inherit; }
+.lead { font-size: 19px; font-weight: 700; }
+.panel { background: var(--paper); border: 3px solid var(--ink); box-shadow: var(--hard); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.panel h3 { margin: 0; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.12em; }
+.dark { background: var(--ink); color: var(--fluo-yellow); box-shadow: 5px 5px 0 var(--paper); }
+.muted { opacity: .75; font-size: 14px; }
+
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+.btn { font-family: var(--font-display); text-transform: uppercase; font-size: 18px; line-height: 1.1; background: var(--ink); color: var(--fluo-yellow); border: 3px solid var(--ink); padding: 12px 14px; box-shadow: 4px 4px 0 var(--paper); transition: transform .08s, box-shadow .08s; }
+.btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--paper); }
+.btn.alt { background: var(--paper); color: var(--ink); box-shadow: var(--hard); }
+.btn.alt:active:not(:disabled) { box-shadow: 1px 1px 0 var(--ink); }
+.btn.hot { background: var(--fluo-pink); color: var(--ink); box-shadow: var(--hard); }
+.btn:disabled { opacity: .4; }
+.btn.wide { width: 100%; }
+:focus-visible { outline: 4px solid var(--fluo-pink); outline-offset: 2px; }
+
+/* Setup screen */
+#setup { max-width: 560px; margin: 0 auto; padding: 20px 18px 48px; display: flex; flex-direction: column; gap: 18px; }
+.prow { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: center; }
+.prow input { min-width: 0; font: inherit; font-weight: 700; padding: 9px 10px; border: 3px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; }
+.prow select { grid-column: 2 / 4; font: inherit; font-weight: 700; padding: 7px 8px; border: 3px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; }
+.swatch { width: 18px; height: 18px; border: 3px solid var(--ink); }
+.toggle { border: 3px solid var(--ink); background: transparent; padding: 7px 10px; font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; min-width: 92px; }
+.toggle[aria-pressed="true"] { background: var(--ink); color: var(--fluo-yellow); }
+.prow + .prow { border-top: 2px dashed var(--ink); padding-top: 10px; }
+.counts { display: flex; gap: 8px; }
+.counts .toggle { flex: 1; min-width: 0; padding: 7px 4px; }
+.exp { border: 3px solid var(--ink); background: #fff; text-align: left; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; box-shadow: 3px 3px 0 var(--ink); }
+.exp b { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; font-size: 17px; }
+.exp span { font-size: 14px; }
+.exp[aria-pressed="true"] { background: var(--fluo-yellow); }
+.exp:disabled { cursor: default; }
+ul.rules { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+ul.rules b { font-weight: 900; }
+.costs { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; font-weight: 700; font-size: 14px; }
+.ico { width: 24px; height: 24px; vertical-align: middle; display: inline-block; }
+
+/* Game screen */
+#game { max-width: 1280px; margin: 0 auto; padding: 12px 14px 32px; display: flex; flex-direction: column; gap: 12px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 16px; align-items: start; }
+@media (max-width: 920px) { .layout { grid-template-columns: 1fr; } }
+.board-wrap { position: relative; background: var(--ink); border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--paper); display: flex; justify-content: center; }
+#board { display: block; touch-action: manipulation; max-width: 100%; }
+.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.turn { display: flex; align-items: center; gap: 10px; }
+.turn .who { flex: 1; min-width: 0; }
+.turn .nm { font-family: var(--font-display); text-transform: uppercase; font-size: 24px; line-height: 1; overflow-wrap: anywhere; }
+.dot { width: 22px; height: 22px; border: 3px solid currentColor; flex: none; border-radius: 50%; }
+.dice { display: flex; gap: 6px; }
+.ava { width: 40px; height: 40px; flex: none; display: block; }
+.ava.big { width: 64px; height: 64px; animation: idle 2.6s ease-in-out infinite; }
+.ava.hop { animation: hop .5s cubic-bezier(.2, 1.6, .4, 1), idle 2.6s .5s ease-in-out infinite; }
+.ava.huge { width: 120px; height: 120px; margin: 4px 0 10px; }
+@keyframes idle { 50% { transform: translateY(-3px) rotate(-3deg); } }
+@keyframes hop { from { transform: scale(.3) rotate(-25deg); } to { transform: none; } }
+.die { width: 38px; height: 38px; background: var(--paper); border: 3px solid var(--ink); border-radius: 7px; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: 3px; }
+.die i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); place-self: center; visibility: hidden; }
+.die i.on { visibility: visible; }
+.die.roll { animation: shake .45s ease-out; }
+@keyframes shake { 0% { transform: rotate(0) } 25% { transform: rotate(-25deg) translateY(-6px) } 50% { transform: rotate(18deg) } 75% { transform: rotate(-8deg) } 100% { transform: none } }
+.hintline { font-weight: 700; font-size: 15px; background: var(--fluo-yellow); color: var(--ink); border: 3px solid var(--ink); padding: 6px 9px; }
+.event { position: relative; }
+.event .evname { font-family: var(--font-display); text-transform: uppercase; font-size: 22px; line-height: 1.05; color: var(--paper); }
+.event .ovni { font-weight: 900; font-size: 14px; border-top: 2px dashed var(--fluo-yellow); padding-top: 6px; }
+.event .evtag { font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: var(--fluo-pink); }
+.hand { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.hand.wide { grid-template-columns: repeat(4, 1fr); }
+.res { border: 3px solid var(--ink); background: #fff; display: flex; flex-direction: column; align-items: center; padding: 4px 2px 2px; position: relative; }
+.res img { width: 40px; height: 40px; }
+.res b { font-family: var(--font-display); font-size: 20px; line-height: 1; }
+.res small { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; }
+.res.zero { opacity: .45; }
+.res.bump { animation: bump .5s ease-out; }
+@keyframes bump { 30% { transform: translateY(-6px) scale(1.08); background: var(--fluo-yellow); } }
+.cards { display: flex; flex-direction: column; gap: 6px; }
+.card { border: 3px solid var(--ink); padding: 6px 8px; display: flex; gap: 8px; align-items: center; background: #fff; }
+.card .ct { flex: 1; min-width: 0; }
+.card .ct b { display: block; font-weight: 900; text-transform: uppercase; font-size: 14px; }
+.card .ct span { font-size: 13px; }
+.card .btn { font-size: 13px; padding: 6px 8px; box-shadow: 2px 2px 0 var(--ink); }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.act { border: 3px solid var(--ink); background: #fff; padding: 7px 8px; text-align: left; display: flex; flex-direction: column; gap: 3px; box-shadow: 3px 3px 0 var(--ink); }
+.act b { font-family: var(--font-display); text-transform: uppercase; font-weight: 400; font-size: 16px; line-height: 1; }
+.act .cost { display: flex; gap: 1px; flex-wrap: wrap; min-height: 22px; }
+.act .cost img { width: 22px; height: 22px; }
+.act .cost em { font-style: normal; font-size: 12px; font-weight: 700; }
+.act[aria-pressed="true"] { background: var(--fluo-yellow); }
+.act:disabled { opacity: .38; box-shadow: none; }
+.act:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.act.big { grid-column: 1 / 3; background: var(--ink); color: var(--fluo-yellow); box-shadow: 3px 3px 0 var(--fluo-pink); align-items: center; padding: 11px; }
+.act.big b { font-size: 21px; }
+.plist { display: flex; flex-direction: column; gap: 6px; }
+.pl { display: grid; grid-template-columns: 40px 1fr auto; gap: 8px; align-items: center; border: 3px solid var(--ink); padding: 6px 8px; background: #fff; }
+.pl.cur { background: var(--fluo-yellow); }
+.pl .nm { font-weight: 900; overflow-wrap: anywhere; }
+.pl .sub { font-size: 12px; font-weight: 700; opacity: .8; }
+.pl .vp { font-family: var(--font-display); font-size: 26px; line-height: 1; text-align: right; }
+.pl .vp small { font-family: var(--font-body); font-size: 11px; display: block; font-weight: 900; }
+.badge { display: inline-block; background: var(--ink); color: var(--fluo-yellow); font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; padding: 1px 5px; margin-right: 3px; }
+.log { max-height: 190px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+.log div { border-bottom: 1px dashed rgba(21,17,13,.3); padding-bottom: 2px; }
+.topbar { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+.topbar h2 { font-size: clamp(26px, 5vw, 38px); }
+.topbar .btn { font-size: 14px; padding: 8px 10px; }
+.toast { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); background: var(--paper); color: var(--ink); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--fluo-pink); padding: 8px 14px; font-weight: 900; font-size: 16px; pointer-events: none; max-width: 90%; text-align: center; opacity: 0; transition: opacity .2s; }
+.toast.show { opacity: 1; }
+
+/* Overlays */
+.overlay { position: fixed; inset: 0; background: rgba(21,17,13,.72); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 20; }
+.sheet { max-width: 460px; width: 100%; max-height: 92vh; overflow-y: auto; }
+.sheet h2 { font-size: 30px; }
+.steppers { display: flex; flex-direction: column; gap: 6px; }
+.step { display: grid; grid-template-columns: 30px 1fr 38px 34px 38px; gap: 6px; align-items: center; font-weight: 900; }
+.step img { width: 30px; height: 30px; }
+.step button { border: 3px solid var(--ink); background: #fff; font-weight: 900; font-size: 20px; height: 36px; padding: 0; }
+.step button:disabled { opacity: .3; }
+.step output { text-align: center; font-family: var(--font-display); font-size: 22px; }
+.step .have { font-size: 12px; opacity: .7; font-weight: 700; }
+.picks { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.picks.wide { grid-template-columns: repeat(4, 1fr); }
+.imp { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; border: 3px solid var(--ink); background: #fff; padding: 8px; }
+.imp b { font-weight: 900; text-transform: uppercase; }
+.imp .lv { display: flex; gap: 3px; margin: 3px 0; }
+.imp .lv i { width: 16px; height: 10px; border: 2px solid var(--ink); }
+.imp .lv i.on { background: var(--fluo-pink); }
+.imp .btn { font-size: 13px; padding: 7px 8px; box-shadow: 2px 2px 0 var(--ink); }
+.imp small { font-size: 12px; display: block; }
+.pickres { border: 3px solid var(--ink); background: #fff; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+.pickres img { width: 36px; height: 36px; }
+.pickres[aria-pressed="true"] { background: var(--fluo-yellow); box-shadow: inset 0 0 0 2px var(--ink); }
+.pickres:disabled { opacity: .3; }
+.pickres em { font-style: normal; font-weight: 700; font-size: 11px; text-transform: none; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row .btn { flex: 1; }
+.answers { display: flex; flex-direction: column; gap: 6px; }
+.answer { display: flex; align-items: center; gap: 8px; border: 3px solid var(--ink); padding: 6px 8px; background: #fff; font-weight: 700; }
+.answer span { flex: 1; }
+.answer .btn { font-size: 13px; padding: 6px 8px; box-shadow: 2px 2px 0 var(--ink); }
+#cover .sheet { text-align: center; align-items: center; }
+#cover .bigname { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(38px, 12vw, 60px); line-height: 1; overflow-wrap: anywhere; }
+#banner { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 30; width: min(420px, 92vw); cursor: pointer; }
+#banner.show { animation: deal .45s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes deal { from { transform: translateX(-50%) rotate(-10deg) scale(.6); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
+#banner .panel { border-width: 4px; box-shadow: 8px 8px 0 var(--fluo-pink); }
+#banner .evname { font-size: 34px; }
+.scores { width: 100%; border-collapse: collapse; font-weight: 700; }
+.scores td { padding: 7px 0; border-bottom: 2px solid var(--ink); }
+.scores td:last-child { text-align: right; font-family: var(--font-display); font-size: 20px; }
+.stamp { align-self: flex-start; font-family: var(--font-display); text-transform: uppercase; font-size: 40px; line-height: 1; padding: 10px 14px 6px; border: 5px solid var(--ink); background: var(--win); color: var(--paper); transform: rotate(-4deg); animation: slam .3s cubic-bezier(.2, 1.6, .4, 1); overflow-wrap: anywhere; }
+@keyframes slam { from { transform: rotate(-4deg) scale(2.2); opacity: 0; } to { transform: rotate(-4deg) scale(1); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .die.roll, .res.bump, #banner.show, .stamp, .ava { animation: none !important; }
+  .btn { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<main id="setup">
+  <div class="kicker"><a href="../">← Juegos</a><span>De 2 a 6 · Un solo aparato</span></div>
+  <h1>La <span class="pop">Bola</span></h1>
+  <p class="lead">Es 1910 y todo mundo anda en la bola. Levanta ranchos, hazlos pueblos y quédate con la región antes que tus compas. El Cacique se va a meter. Siempre se mete.</p>
+
+  <section class="panel">
+    <h3>¿Cuántos juegan?</h3>
+    <div class="counts" id="countBtns"></div>
+    <div id="playerRows" class="stack"></div>
+    <p class="muted">Pueden jugar varias personas pasándose el aparato, o tú solo contra la máquina.</p>
+  </section>
+
+  <section class="panel">
+    <h3>Expansiones</h3>
+    <div class="stack" id="expBtns"></div>
+  </section>
+
+  <button class="btn wide" id="startBtn">¡Vámonos a la bola!</button>
+
+  <section class="panel">
+    <h3>Cómo se juega</h3>
+    <ul class="rules">
+      <li>Cada quien pone <b>2 ranchos</b> y <b>2 caminos</b> para empezar.</li>
+      <li>En tu turno tiras los dados. Cada terreno con ese número le da su recurso a los ranchos y pueblos que lo tocan.</li>
+      <li>Gasta recursos para construir, cambia con el banco o con los demás.</li>
+      <li>Si sale <b>7</b> llega el Cacique. Quien tenga más de 7 cartas tira la mitad. Luego tú lo mandas a un terreno, que deja de producir, y le robas una carta a alguien de ahí.</li>
+      <li>Rancho 1 punto, pueblo 2, Camino Real 2 (5 caminos seguidos o más), División del Norte 2 (3 guerrilleros o más). La meta depende de las expansiones.</li>
+    </ul>
+    <h3>Lo que cambia</h3>
+    <p>Cada ronda sale una noticia. A veces hay sequía y no hay maíz, a veces es día de feria y todo sale más barato. El mapa tampoco se queda quieto. Alguien puede mover los mojones y revolver los números, y en la barranca puede aparecer una veta de plata.</p>
+    <p>Además cada quien juega con un oficio. La Comerciante regatea mejor con el banco, la Soldadera nunca tira cartas con el 7, y el Ingeniero hace pueblos más baratos con planos dibujados en una servilleta.</p>
+    <h3>Expansiones</h3>
+    <p>El Tren pone un desierto en medio del mapa que solo se cruza por vía. En el centro está la Capital, y quien ponga ahí el primer rancho gana 2 puntos. La orilla del mapa empieza tapada, y quien llega primero a un terreno tapado se lleva uno de ese recurso. Con El Tren pueden jugar hasta 6.</p>
+    <p>Los Corridos le pone números al desierto, y el desierto te da corridos. Los corridos los cambias por favores, como correr al Cacique o sacar un plan. También anda suelto el Gallo Giro, que vale 1 punto, pero con cada 7 se va con quien vaya perdiendo.</p>
+    <p>Generales y Dorados hace que los pueblos den periódicos, sarapes y pesos, y con eso subes de nivel tu Imprenta, tu Mercado o tu Cuartel. Cada vez que alguien saca dobles, los federales se acercan un día. Cuando llegan, si hay más pueblos que defensores, a quien menos defendió le quitan un pueblo.</p>
+    <h3>Lo que cuesta</h3>
+    <div class="costs" id="costList"></div>
+  </section>
+</main>
+
+<div id="game" class="hidden">
+  <div class="topbar">
+    <h2>La <span class="pop">Bola</span></h2>
+    <button class="btn alt" id="quitBtn">Salir</button>
+  </div>
+  <div class="layout">
+    <div class="board-wrap" id="boardWrap">
+      <canvas id="board" aria-label="Tablero"></canvas>
+      <div class="toast" id="toast"></div>
+    </div>
+    <aside class="side">
+      <section class="panel">
+        <div class="turn">
+          <img class="ava big" id="turnDot" alt="">
+          <div class="who"><div class="nm" id="turnName"></div><div class="muted" id="turnOficio"></div></div>
+          <div class="dice"><div class="die" id="die0"></div><div class="die" id="die1"></div></div>
+        </div>
+        <div class="hintline" id="hint"></div>
+      </section>
+      <section class="panel dark event" id="eventBox">
+        <span class="evtag" id="evTag"></span>
+        <span class="evname" id="evName"></span>
+        <span id="evText"></span>
+        <span class="ovni" id="fuegoLine"></span>
+        <span class="muted" id="goalLine"></span>
+      </section>
+      <section class="panel" id="handBox">
+        <h3 id="handTitle">Tu mano</h3>
+        <div class="hand" id="hand"></div>
+        <div class="cards" id="cards"></div>
+      </section>
+      <section class="panel">
+        <div class="actions" id="actions"></div>
+      </section>
+      <section class="panel">
+        <h3>Jugadores</h3>
+        <div class="plist" id="plist"></div>
+      </section>
+      <section class="panel">
+        <h3>Lo que ha pasado</h3>
+        <div class="log" id="log"></div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<div class="overlay hidden" id="modal"><div class="panel sheet" id="sheet"></div></div>
+<div class="overlay hidden" id="cover"><div class="panel sheet">
+  <h3>Pásale el aparato a</h3>
+  <img class="ava huge" id="coverAva" alt="">
+  <div class="bigname" id="coverName"></div>
+  <p class="muted">Que nadie más vea tu mano.</p>
+  <button class="btn wide" id="coverBtn">Ya lo tengo</button>
+</div></div>
+<div id="banner" class="hidden"><div class="panel dark event">
+  <span class="evtag" id="bnTag"></span>
+  <span class="evname" id="bnName"></span>
+  <span id="bnText"></span>
+</div></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Data ----------
+  var INK = "#15110d", PAPER = "#fff9e3", PI = Math.PI, SQ3 = Math.sqrt(3);
+  var RES = ["madera", "barro", "maiz", "algodon", "obsidiana"];
+  var COM = ["amate", "huipil", "navaja"];
+  var NAME = { madera: "Madera", barro: "Adobe", maiz: "Maíz", algodon: "Caballos", obsidiana: "Plata", amate: "Periódicos", huipil: "Sarapes", navaja: "Pesos", pescado: "Corridos" };
+  var ONE = { algodon: "caballo", amate: "periódico", huipil: "sarape", navaja: "peso", pescado: "corrido" };
+  var TILE = {
+    selva: { res: "madera", com: "amate", name: "Sierra", col: "#3a9a5e" },
+    ribera: { res: "barro", name: "Llano", col: "#de8650" },
+    milpa: { res: "maiz", name: "Milpa", col: "#f4c834" },
+    algodonal: { res: "algodon", com: "huipil", name: "Potrero", col: "#a5d25e" },
+    volcan: { res: "obsidiana", com: "navaja", name: "Mina", col: "#9a93ab" },
+    malpais: { res: null, name: "Barranca", col: "#c9a27a" },
+    lago: { res: null, name: "Desierto", col: "#f0d9a0", water: true }
+  };
+  var RES_TILE = { madera: "selva", barro: "ribera", maiz: "milpa", algodon: "algodonal", obsidiana: "volcan" };
+  var COLORS = [
+    { c: "#ff2e88", name: "Rosa" }, { c: "#2f6bff", name: "Azul" }, { c: "#f6f2e4", name: "Blanco" },
+    { c: "#9b4dff", name: "Morado" }, { c: "#19d3e6", name: "Cian" }, { c: "#e8262b", name: "Rojo" }
+  ];
+  var DEFAULT_NAMES = ["Pancho", "Chabela", "Lucio", "Juana", "Toribio", "Valentina"];
+  var COST = {
+    calzada: { madera: 1, barro: 1 },
+    canoa: { madera: 1, obsidiana: 1 },
+    aldea: { madera: 1, barro: 1, maiz: 1, algodon: 1 },
+    ciudad: { maiz: 2, obsidiana: 3 },
+    codice: { maiz: 1, algodon: 1, obsidiana: 1 },
+    jaguar: { algodon: 1, obsidiana: 1 }
+  };
+  var LIMIT = { calzada: 15, canoa: 15, aldea: 5, ciudad: 4, jaguar: 6 };
+  var OFICIOS = {
+    tameme: { name: "El Arriero", desc: "Tus caminos y vías cuestan solo 1 madera. Las mulas ponen lo demás." },
+    tallador: { name: "El Minero", desc: "Cada vez que tus minas dan, sacas 1 plata extra." },
+    pochteca: { name: "La Comerciante", desc: "Le cambias al banco un punto más barato. Regateas hasta con tu mamá." },
+    ticitl: { name: "La Curandera", desc: "El Cacique le tiene miedo. No te roba ni frena tus casas." },
+    arquitecto: { name: "El Ingeniero", desc: "Tus pueblos cuestan 1 plata menos. Los planos los hizo en una servilleta." },
+    astronomo: { name: "La Soldadera", desc: "Carga con todo. Cuando sale 7 nunca tiras cartas." }
+  };
+  var OFICIO_IDS = Object.keys(OFICIOS);
+  var ENC = {
+    aguila: { name: "Guerrillero", desc: "Corre al Cacique a otro terreno y róbale 1 carta a alguien de ahí. Cuenta para tu División." },
+    templo: { name: "Foto con Pancho Villa", desc: "Vale 1 punto. La tienes escondida hasta el final." },
+    tamemes: { name: "Tren militar", desc: "Construye 2 caminos o vías gratis." },
+    tributo: { name: "Botín", desc: "Toma 2 recursos del banco, los que quieras." },
+    chisme: { name: "Requisición", desc: "Elige un recurso. Todos te dan los que tengan de ese. Nadie se ve contento." }
+  };
+  var EVENTS = {
+    sequia: { name: "Sequía", text: "Ni una nube. Las milpas no dan maíz esta ronda." },
+    lluvias: { name: "Buen temporal", text: "Llovió a tiempo. Milpas y potreros dan doble esta ronda." },
+    popo: { name: "Bonanza en la mina", text: "Las minas dan doble esta ronda." },
+    granizo: { name: "Se espantó la caballada", text: "Un trueno y se fueron todos. Los potreros no dan nada esta ronda." },
+    tianguis: { name: "Día de feria", text: "Hay regateo en la plaza. Cambias con el banco un punto más barato esta ronda." },
+    eclipse: { name: "Tolvanera", text: "Se voló hasta el sombrero. Un terreno no produce esta ronda." },
+    temblor: { name: "Se movieron los mojones", text: "Nadie sabe quién fue. Dos números cambian de lugar para siempre." },
+    volcan: { name: "Hallaron una veta", text: "Un compa se cayó en la barranca y salió con plata en las bolsas. La barranca ahora es mina." },
+    fiesta: { name: "Baile en el pueblo", text: "Tocó la banda toda la noche. Todos reciben 1 recurso al azar. Quien tiene pueblo recibe 2." },
+    hambre: { name: "Cacique con hambre", text: "Esta ronda el Cacique roba 2 cartas en vez de 1." },
+    pochtecas: { name: "Llegó el tren", text: "Esta ronda caminos y vías cuestan solo 1 madera." },
+    tributo: { name: "Reparto de tierras", text: "Quien va hasta abajo en puntos recibe 2 recursos al azar." },
+    siesta: { name: "Domingo de descanso", text: "No pasa nada. Aprovecha para construir." },
+    cometa: { name: "Los federales apuraron el paso", text: "Alguien les prestó caballos. Se acercan 2 días." },
+    cuenta: { name: "Los federales se perdieron", text: "Agarraron el camino equivocado. Se alejan 1 día." },
+    crecida: { name: "Llegó el corridista", text: "Trae guitarra nueva. El desierto da doble corridos esta ronda." }
+  };
+  var EVENT_DECK = ["sequia", "lluvias", "popo", "granizo", "tianguis", "eclipse", "eclipse", "temblor", "temblor", "volcan", "fiesta", "hambre", "pochtecas", "tributo", "siesta"];
+  var FUEGO_MAX = 7;
+  var IMP = {
+    saber: { name: "Imprenta", com: "amate", lv: ["", "Si un tiro no te da nada, te llevas 1 recurso.", "", "La Mejor Imprenta (+2)."] },
+    tianguis: { name: "Mercado", com: "huipil", lv: ["", "Cambias con el banco 1 más barato.", "Das periódicos, sarapes o pesos al banco 2 por 1.", "El Mejor Mercado (+2)."] },
+    guerra: { name: "Cuartel", com: "navaja", lv: ["", "Tus Dorados cuestan solo 1 caballo.", "Tienes +1 de defensa.", "El Mejor Cuartel (+2)."] }
+  };
+  var IMP_IDS = ["saber", "tianguis", "guerra"];
+  var FISH = [
+    { id: "ahuyentar", n: 2, name: "Corrido contra el Cacique", desc: "Lo mueves a donde quieras. No roba." },
+    { id: "robar", n: 3, name: "Corrido de chisme", desc: "Le robas 1 carta a quien quieras." },
+    { id: "recurso", n: 4, name: "Te pagan por cantar", desc: "Tomas 1 recurso del banco." },
+    { id: "ruta", n: 5, name: "Corrido del ferrocarril", desc: "Construyes 1 camino o vía gratis." },
+    { id: "codice", n: 7, name: "Corrido famoso", desc: "Te llevas 1 plan gratis." }
+  ];
+
+  var params = new URLSearchParams(location.search);
+  var FAST = params.has("rapido");
+  var BOT_DELAY = FAST ? 4 : 700;
+
+  // ---------- Helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function pips(n) { return n ? 6 - Math.abs(7 - n) : 0; }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]; }); }
+  function lc(k, n) { return n === 1 && ONE[k] ? ONE[k] : NAME[k].toLowerCase(); }
+  var TONE = {};
+  function hexrgb(h) { return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)]; }
+  function mix(a, b, k) {
+    var key = a + b + k; if (TONE[key]) return TONE[key];
+    var A = hexrgb(a), B = hexrgb(b), r = "#";
+    for (var i = 0; i < 3; i++) r += ("0" + Math.round(A[i] + (B[i] - A[i]) * k).toString(16)).slice(-2);
+    return (TONE[key] = r);
+  }
+  function shd(c) { return mix(c, "#2a1838", 0.38); }
+  function hil(c) { return mix(c, "#fff2cf", 0.35); }
+
+  // ---------- Drawing primitives (cel shading, ink outlines) ----------
+  var LW = 1.5;
+  function poly(c, a, fill, lw) {
+    c.beginPath(); c.moveTo(a[0], a[1]);
+    for (var i = 2; i < a.length; i += 2) c.lineTo(a[i], a[i + 1]);
+    c.closePath();
+    if (fill) { c.fillStyle = fill; c.fill(); }
+    if (lw !== 0) { c.lineWidth = lw || LW; c.strokeStyle = INK; c.lineJoin = "round"; c.stroke(); }
+  }
+  function oell(c, x, y, rx, ry, fill, rot, lw) { c.fillStyle = fill; c.beginPath(); c.ellipse(x, y, rx, ry, rot || 0, 0, PI * 2); c.fill(); if (lw !== 0) { c.lineWidth = lw || LW; c.strokeStyle = INK; c.stroke(); } }
+  function orect(c, x, y, w, h, fill, lw) { c.fillStyle = fill; c.fillRect(x, y, w, h); if (lw !== 0) { c.lineWidth = lw || LW; c.strokeStyle = INK; c.strokeRect(x, y, w, h); } }
+  function inkLine(c, pts, w, col) {
+    c.lineCap = "round"; c.lineJoin = "round";
+    c.beginPath(); c.moveTo(pts[0], pts[1]); for (var i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]);
+    c.strokeStyle = INK; c.lineWidth = w + LW * 2; c.stroke();
+    c.strokeStyle = col; c.lineWidth = w; c.stroke();
+  }
+  function hexPath(c, x, y, s) {
+    c.beginPath();
+    for (var i = 0; i < 6; i++) { var a = PI / 180 * (60 * i - 30); var px = x + s * Math.cos(a), py = y + s * Math.sin(a); if (i) c.lineTo(px, py); else c.moveTo(px, py); }
+    c.closePath();
+  }
+
+  function pine(c, x, y, k) {
+    var g = "#1f7a47";
+    inkLine(c, [x, y, x, y - k * 0.3], k * 0.08, "#7a4a2a");
+    poly(c, [x - k * 0.26, y - k * 0.22, x, y - k * 0.62, x + k * 0.26, y - k * 0.22], g);
+    poly(c, [x - k * 0.2, y - k * 0.46, x, y - k * 0.86, x + k * 0.2, y - k * 0.46], g);
+    c.fillStyle = shd(g); c.beginPath(); c.moveTo(x, y - k * 0.6); c.lineTo(x + k * 0.24, y - k * 0.24); c.lineTo(x + k * 0.06, y - k * 0.24); c.closePath(); c.fill();
+    c.fillStyle = hil(g); c.beginPath(); c.moveTo(x - k * 0.02, y - k * 0.8); c.lineTo(x - k * 0.13, y - k * 0.52); c.lineTo(x - k * 0.06, y - k * 0.52); c.closePath(); c.fill();
+  }
+  function hawk(c, x, y, k) {
+    c.strokeStyle = INK; c.lineWidth = Math.max(1.2, k * 0.025); c.lineCap = "round";
+    c.beginPath(); c.moveTo(x - k * 0.1, y); c.quadraticCurveTo(x - k * 0.05, y - k * 0.06, x, y); c.quadraticCurveTo(x + k * 0.05, y - k * 0.06, x + k * 0.1, y); c.stroke();
+  }
+  function brick(c, x, y, k) {
+    var b = "#b9552a";
+    orect(c, x - k * 0.17, y - k * 0.08, k * 0.34, k * 0.16, b);
+    c.fillStyle = hil(b); c.fillRect(x - k * 0.15, y - k * 0.06, k * 0.3, k * 0.035);
+  }
+  function olla(c, x, y, k) {
+    var b = "#a9472a";
+    oell(c, x, y - k * 0.17, k * 0.2, k * 0.17, b);
+    orect(c, x - k * 0.1, y - k * 0.4, k * 0.2, k * 0.08, b);
+    c.strokeStyle = "#f6e3b8"; c.lineWidth = Math.max(1, k * 0.03); c.beginPath(); c.moveTo(x - k * 0.17, y - k * 0.18); c.lineTo(x + k * 0.17, y - k * 0.18); c.stroke();
+  }
+  function puddle(c, x, y, k) {
+    oell(c, x, y - k * 0.04, k * 0.2, k * 0.07, "#7cc6ef", 0, 1);
+  }
+  function corn(c, x, y, k) {
+    inkLine(c, [x, y, x + k * 0.02, y - k * 0.7], Math.max(1.5, k * 0.05), "#3f8f31");
+    c.strokeStyle = INK; c.lineWidth = LW; c.fillStyle = "#4fa83c";
+    c.beginPath(); c.moveTo(x, y - k * 0.25); c.quadraticCurveTo(x - k * 0.25, y - k * 0.35, x - k * 0.28, y - k * 0.15); c.quadraticCurveTo(x - k * 0.12, y - k * 0.28, x, y - k * 0.2); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(x + k * 0.01, y - k * 0.45); c.quadraticCurveTo(x + k * 0.26, y - k * 0.55, x + k * 0.28, y - k * 0.36); c.quadraticCurveTo(x + k * 0.12, y - k * 0.46, x + k * 0.01, y - k * 0.4); c.fill(); c.stroke();
+    oell(c, x + k * 0.07, y - k * 0.5, k * 0.065, k * 0.15, "#ffd84a", -0.2);
+    c.fillStyle = "#e9a81c"; c.beginPath(); c.ellipse(x + k * 0.09, y - k * 0.47, k * 0.03, k * 0.1, -0.2, 0, PI * 2); c.fill();
+  }
+  // A brown horse, side view, facing right.
+  function horse(c, x, y, k, flip) {
+    var b = "#8a4f2a", m = "#3a2418", w = Math.max(1.4, k * 0.045);
+    c.save(); if (flip) { c.translate(x * 2, 0); c.scale(-1, 1); }
+    inkLine(c, [x - k * 0.15, y - k * 0.28, x - k * 0.17, y], w, shd(b));
+    inkLine(c, [x + k * 0.14, y - k * 0.28, x + k * 0.16, y], w, shd(b));
+    c.strokeStyle = INK; c.lineWidth = w + LW * 2; c.lineCap = "round";
+    c.beginPath(); c.moveTo(x - k * 0.23, y - k * 0.36); c.quadraticCurveTo(x - k * 0.34, y - k * 0.3, x - k * 0.3, y - k * 0.12); c.stroke();
+    c.strokeStyle = m; c.lineWidth = w * 1.3; c.stroke();
+    inkLine(c, [x - k * 0.08, y - k * 0.28, x - k * 0.07, y], w, b);
+    inkLine(c, [x + k * 0.2, y - k * 0.28, x + k * 0.22, y], w, b);
+    oell(c, x, y - k * 0.34, k * 0.25, k * 0.12, b);
+    poly(c, [x + k * 0.12, y - k * 0.4, x + k * 0.24, y - k * 0.64, x + k * 0.33, y - k * 0.6, x + k * 0.25, y - k * 0.33], b);
+    oell(c, x + k * 0.34, y - k * 0.6, k * 0.12, k * 0.06, b, 0.45);
+    poly(c, [x + k * 0.25, y - k * 0.66, x + k * 0.27, y - k * 0.76, x + k * 0.31, y - k * 0.66], b, 1);
+    inkLine(c, [x + k * 0.16, y - k * 0.44, x + k * 0.25, y - k * 0.66], w * 0.9, m);
+    c.fillStyle = INK; c.beginPath(); c.arc(x + k * 0.32, y - k * 0.63, k * 0.018, 0, PI * 2); c.fill();
+    c.fillStyle = hil(b); c.beginPath(); c.ellipse(x - k * 0.04, y - k * 0.41, k * 0.14, k * 0.03, 0, 0, PI * 2); c.fill();
+    c.restore();
+  }
+  function fence(c, x, y, k) {
+    var wd = "#a8743f", w = Math.max(1.2, k * 0.035);
+    inkLine(c, [x - k * 0.18, y, x - k * 0.18, y - k * 0.24], w, wd);
+    inkLine(c, [x + k * 0.18, y, x + k * 0.18, y - k * 0.24], w, wd);
+    inkLine(c, [x - k * 0.24, y - k * 0.17, x + k * 0.24, y - k * 0.17], w * 0.8, wd);
+    inkLine(c, [x - k * 0.24, y - k * 0.08, x + k * 0.24, y - k * 0.08], w * 0.8, wd);
+  }
+  function tuft(c, x, y, k) {
+    c.strokeStyle = "#3e7f2c"; c.lineWidth = Math.max(1.2, k * 0.04); c.lineCap = "round";
+    c.beginPath(); c.moveTo(x - k * 0.08, y); c.lineTo(x - k * 0.12, y - k * 0.14); c.moveTo(x, y); c.lineTo(x, y - k * 0.18); c.moveTo(x + k * 0.08, y); c.lineTo(x + k * 0.12, y - k * 0.13); c.stroke();
+  }
+  function rock(c, x, y, k, col) { poly(c, [x - k * 0.14, y, x - k * 0.1, y - k * 0.1, x + k * 0.02, y - k * 0.14, x + k * 0.14, y - k * 0.05, x + k * 0.13, y], col || "#5b5366"); }
+  function nugget(c, x, y, k) {
+    var g = "#dfe3ea";
+    poly(c, [x - k * 0.1, y, x - k * 0.08, y - k * 0.09, x, y - k * 0.13, x + k * 0.09, y - k * 0.08, x + k * 0.1, y], g);
+    c.fillStyle = "#ffffff"; c.beginPath(); c.arc(x - k * 0.03, y - k * 0.08, k * 0.025, 0, PI * 2); c.fill();
+  }
+  function nopal(c, x, y, k) {
+    var g = "#3c9a52";
+    oell(c, x, y - k * 0.22, k * 0.13, k * 0.2, g);
+    oell(c, x - k * 0.16, y - k * 0.46, k * 0.1, k * 0.15, g, -0.5);
+    oell(c, x + k * 0.15, y - k * 0.5, k * 0.1, k * 0.15, g, 0.5);
+    c.fillStyle = "#e8262b"; c.beginPath(); c.arc(x + k * 0.2, y - k * 0.66, k * 0.04, 0, PI * 2); c.arc(x - k * 0.2, y - k * 0.62, k * 0.035, 0, PI * 2); c.fill();
+    c.fillStyle = INK; [[0, -0.25], [0.04, -0.12], [-0.05, -0.3], [-0.16, -0.47], [0.15, -0.5]].forEach(function (d) { c.fillRect(x + d[0] * k, y + d[1] * k, 1.2, 1.2); });
+  }
+  // A hill with a mine shaft and a silver nugget by the door.
+  function mine(c, x, y, k) {
+    var m = "#7d7590", wd = "#8a5a2c";
+    poly(c, [x - k * 0.62, y, x - k * 0.18, y - k * 0.68, x + k * 0.02, y - k * 0.56, x + k * 0.16, y - k * 0.72, x + k * 0.62, y], m);
+    c.fillStyle = shd(m); c.beginPath(); c.moveTo(x + k * 0.16, y - k * 0.72); c.lineTo(x + k * 0.62, y); c.lineTo(x + k * 0.26, y); c.closePath(); c.fill();
+    c.strokeStyle = hil(m); c.lineWidth = Math.max(1.2, k * 0.04); c.beginPath(); c.moveTo(x - k * 0.22, y - k * 0.58); c.lineTo(x - k * 0.45, y - k * 0.16); c.stroke();
+    c.fillStyle = INK; c.beginPath(); c.moveTo(x - k * 0.14, y); c.lineTo(x - k * 0.14, y - k * 0.18); c.arc(x, y - k * 0.18, k * 0.14, PI, 0); c.lineTo(x + k * 0.14, y); c.closePath(); c.fill();
+    inkLine(c, [x - k * 0.15, y, x - k * 0.15, y - k * 0.28], k * 0.05, wd);
+    inkLine(c, [x + k * 0.15, y, x + k * 0.15, y - k * 0.28], k * 0.05, wd);
+    inkLine(c, [x - k * 0.2, y - k * 0.3, x + k * 0.2, y - k * 0.3], k * 0.05, wd);
+    nugget(c, x + k * 0.36, y - k * 0.01, k);
+  }
+  function saguaro(c, x, y, k) {
+    var g = "#3c9a52", w = k * 0.12;
+    inkLine(c, [x - k * 0.18, y - k * 0.32, x - k * 0.18, y - k * 0.5], w * 0.7, g);
+    inkLine(c, [x + k * 0.17, y - k * 0.4, x + k * 0.17, y - k * 0.6], w * 0.7, g);
+    c.lineCap = "round"; c.strokeStyle = INK; c.lineWidth = w * 0.7 + LW * 2;
+    c.beginPath(); c.moveTo(x, y - k * 0.3); c.lineTo(x - k * 0.18, y - k * 0.3); c.moveTo(x, y - k * 0.38); c.lineTo(x + k * 0.17, y - k * 0.38); c.stroke();
+    c.strokeStyle = g; c.lineWidth = w * 0.7; c.stroke();
+    c.beginPath(); c.moveTo(x - k * 0.18, y - k * 0.3); c.lineTo(x - k * 0.18, y - k * 0.5); c.moveTo(x + k * 0.17, y - k * 0.38); c.lineTo(x + k * 0.17, y - k * 0.6); c.stroke();
+    inkLine(c, [x, y, x, y - k * 0.72], w, g);
+    c.strokeStyle = hil(g); c.lineWidth = Math.max(1, k * 0.025); c.beginPath(); c.moveTo(x - w * 0.2, y - k * 0.05); c.lineTo(x - w * 0.2, y - k * 0.66); c.stroke();
+  }
+  function dune(c, x, y, k, col) {
+    c.strokeStyle = col; c.lineWidth = Math.max(1.2, k * 0.035); c.lineCap = "round";
+    c.beginPath(); c.moveTo(x - k * 0.25, y); c.quadraticCurveTo(x, y - k * 0.12, x + k * 0.25, y); c.stroke();
+  }
+  function notes(c, x, y, k) {
+    var w = Math.max(1.2, k * 0.025);
+    c.fillStyle = INK; c.strokeStyle = INK; c.lineWidth = w;
+    c.beginPath(); c.ellipse(x - k * 0.08, y, k * 0.05, k * 0.035, -0.4, 0, PI * 2); c.fill();
+    c.beginPath(); c.ellipse(x + k * 0.1, y - k * 0.04, k * 0.05, k * 0.035, -0.4, 0, PI * 2); c.fill();
+    c.beginPath(); c.moveTo(x - k * 0.035, y); c.lineTo(x - k * 0.035, y - k * 0.2); c.lineTo(x + k * 0.145, y - k * 0.24); c.lineTo(x + k * 0.145, y - k * 0.04); c.stroke();
+    c.lineWidth = w * 2.2; c.beginPath(); c.moveTo(x - k * 0.035, y - k * 0.19); c.lineTo(x + k * 0.145, y - k * 0.23); c.stroke();
+  }
+
+  function tileArt(c, type, x, y, s, icon, fishing) {
+    LW = Math.max(1, s * (icon ? 0.04 : 0.028));
+    var ay = icon ? y + s * 0.32 : y - s * 0.1;
+    var k = icon ? s * 0.95 : s * 0.75;
+    if (type === "selva") { pine(c, x - k * 0.33, ay, k * 0.8); pine(c, x + k * 0.33, ay, k * 0.8); pine(c, x, ay - k * 0.08, k); if (!icon) hawk(c, x + k * 0.4, ay - k * 0.8, k); }
+    else if (type === "ribera") { brick(c, x - k * 0.22, ay - k * 0.1, k); brick(c, x + k * 0.14, ay - k * 0.1, k); brick(c, x - k * 0.04, ay - k * 0.27, k); olla(c, x + k * 0.42, ay, k * 0.8); }
+    else if (type === "milpa") { corn(c, x - k * 0.28, ay, k * 0.85); corn(c, x + k * 0.28, ay, k * 0.85); corn(c, x, ay - k * 0.06, k); }
+    else if (type === "algodonal") { if (!icon) fence(c, x - k * 0.38, ay - k * 0.05, k * 0.9); horse(c, x + k * 0.04, ay, k * 1.1); }
+    else if (type === "volcan") { mine(c, x, ay, k); }
+    else if (type === "malpais") { rock(c, x - s * 0.4, y + s * 0.15, s, "#4a4250"); rock(c, x + s * 0.42, y + s * 0.3, s * 0.8, "#4a4250"); nopal(c, x, y + s * 0.35, s * 0.95); }
+    else if (type === "lago") {
+      var dc = shd(TILE.lago.col);
+      dune(c, x - s * 0.35, y - s * 0.4, s, dc); dune(c, x + s * 0.3, y - s * 0.22, s, dc); dune(c, x - s * 0.2, y + s * 0.6, s, dc); dune(c, x + s * 0.42, y + s * 0.52, s, dc);
+      saguaro(c, x - s * 0.5, y + s * 0.42, s * 0.75);
+      if (fishing) notes(c, x + s * 0.05, y - s * 0.34, s * 1.3);
+    }
+    if (!icon && type !== "malpais" && type !== "lago") {
+      var by = y + s * 0.58, bx = s * 0.5, kk = s * 0.42;
+      if (type === "selva") { pine(c, x - bx, by, kk); pine(c, x + bx, by, kk); }
+      if (type === "ribera") { puddle(c, x - bx, by, kk * 1.3); tuft(c, x + bx, by, kk * 1.4); }
+      if (type === "milpa") { corn(c, x - bx, by, kk * 0.9); corn(c, x + bx, by, kk * 0.9); }
+      if (type === "algodonal") { tuft(c, x - bx, by, kk * 1.4); tuft(c, x + bx, by, kk * 1.4); }
+      if (type === "volcan") { rock(c, x - bx, by, kk * 1.4); nugget(c, x + bx, by, kk * 1.6); }
+    }
+  }
+
+  function drawTile(c, type, x, y, s, icon, fishing) {
+    var base = TILE[type].col;
+    hexPath(c, x, y, s * 0.97);
+    c.save(); c.clip();
+    c.fillStyle = base; c.fillRect(x - s, y - s, s * 2, s * 2);
+    c.fillStyle = shd(base); c.globalAlpha = 0.5;
+    c.beginPath(); c.moveTo(x - s, y + s * 0.55); c.quadraticCurveTo(x, y + s * 0.38, x + s, y + s * 0.6); c.lineTo(x + s, y + s); c.lineTo(x - s, y + s); c.fill();
+    c.globalAlpha = 1;
+    c.strokeStyle = hil(base); c.lineWidth = s * 0.08;
+    c.beginPath(); var r = s * 0.86;
+    c.moveTo(x - r * SQ3 / 2, y - r / 2); c.lineTo(x, y - r); c.lineTo(x + r * SQ3 / 2, y - r / 2); c.stroke();
+    tileArt(c, type, x, y, s, icon, fishing);
+    c.restore();
+    hexPath(c, x, y, s * 0.97);
+    c.lineWidth = Math.max(1.5, s * 0.05); c.strokeStyle = INK; c.lineJoin = "round"; c.stroke();
+  }
+  function drawFog(c, x, y, s) {
+    hexPath(c, x, y, s * 0.97);
+    c.fillStyle = "#6b5140"; c.fill();
+    c.save(); c.clip();
+    c.strokeStyle = "rgba(255,240,210,.18)"; c.lineWidth = s * 0.05; c.lineCap = "round";
+    for (var k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(x - s, y + k * s * 0.35); c.quadraticCurveTo(x, y + k * s * 0.35 - s * 0.2, x + s, y + k * s * 0.35); c.stroke(); }
+    c.restore();
+    hexPath(c, x, y, s * 0.97); c.lineWidth = Math.max(1.5, s * 0.05); c.strokeStyle = INK; c.stroke();
+    c.font = Math.round(s * 0.62) + 'px "Bowlby One", "Arial Black", sans-serif';
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.lineWidth = Math.max(2, s * 0.08); c.strokeStyle = INK; c.strokeText("?", x, y + s * 0.04);
+    c.fillStyle = "#f2dca4"; c.fillText("?", x, y + s * 0.04);
+  }
+  // The Mexican flag marks the Capital in the middle of the desert.
+  function drawCapitalMark(c, x, y, s, col) {
+    var k = s * 0.42, fx = x + k * 0.03, fy = y - k * 1.0, fw = k * 0.6, fh = k * 0.36;
+    if (col) oell(c, x, y, k * 0.22, k * 0.08, col);
+    inkLine(c, [x, y, x, y - k * 1.05], k * 0.05, "#7a4a2a");
+    c.fillStyle = "#1f8a4c"; c.fillRect(fx, fy, fw / 3, fh);
+    c.fillStyle = "#f6f2e4"; c.fillRect(fx + fw / 3, fy, fw / 3, fh);
+    c.fillStyle = "#d6202f"; c.fillRect(fx + fw * 2 / 3, fy, fw / 3, fh);
+    c.fillStyle = "#7a4a2a"; c.beginPath(); c.arc(fx + fw / 2, fy + fh / 2, k * 0.045, 0, PI * 2); c.fill();
+    c.lineWidth = LW; c.strokeStyle = INK; c.strokeRect(fx, fy, fw, fh);
+    oell(c, x, y - k * 1.07, k * 0.04, k * 0.04, "#ffd84a", 0, 1);
+  }
+
+  function drawToken(c, n, x, y, s, flash, water) {
+    var r = s * 0.27;
+    c.fillStyle = "rgba(21,17,13,.35)"; c.beginPath(); c.arc(x + s * 0.03, y + s * 0.04, r, 0, PI * 2); c.fill();
+    oell(c, x, y, r, r, flash ? "#fff27a" : water ? "#fff0c8" : PAPER, 0, Math.max(1.5, s * 0.04));
+    var hot = n === 6 || n === 8;
+    c.fillStyle = hot ? "#d6202f" : INK;
+    c.font = Math.round(s * (hot ? 0.28 : 0.25)) + 'px "Bowlby One", "Arial Black", sans-serif';
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText(String(n), x, y - s * 0.04);
+    var p = pips(n), w = s * 0.055;
+    for (var i = 0; i < p; i++) { c.beginPath(); c.arc(x + (i - (p - 1) / 2) * w, y + s * 0.15, s * 0.018, 0, PI * 2); c.fill(); }
+  }
+
+  // El Cacique: a big man in a black suit with a sombrero, a mustache and a bag of money.
+  function drawCacique(c, x, y, k, t, walking) {
+    LW = Math.max(1.2, k * 0.035);
+    var suit = "#2b2a3a", skin = "#d89a6a", hat = "#e2c27a", bob = Math.sin(t / 260) * k * 0.03;
+    y += bob;
+    c.save(); c.globalAlpha = 0.3 + 0.12 * Math.sin(t / 300); c.fillStyle = "#ffe500"; c.beginPath(); c.ellipse(x, y, k * 0.55, k * 0.48, 0, 0, PI * 2); c.fill(); c.restore();
+    c.fillStyle = "rgba(21,17,13,.35)"; c.beginPath(); c.ellipse(x, y + k * 0.42 - bob, k * 0.42, k * 0.08, 0, 0, PI * 2); c.fill();
+    var sw = walking ? Math.sin(t / 60) * k * 0.08 : 0;
+    inkLine(c, [x - k * 0.12, y + k * 0.3, x - k * 0.13 + sw, y + k * 0.42], k * 0.09, suit);
+    inkLine(c, [x + k * 0.12, y + k * 0.3, x + k * 0.13 - sw, y + k * 0.42], k * 0.09, suit);
+    oell(c, x, y + k * 0.1, k * 0.3, k * 0.27, suit);
+    poly(c, [x - k * 0.09, y - k * 0.14, x + k * 0.09, y - k * 0.14, x, y + k * 0.1], "#f6f2e4", 1);
+    poly(c, [x - k * 0.06, y - k * 0.12, x + k * 0.06, y - k * 0.12, x, y - k * 0.06], "#d6202f", 1);
+    c.fillStyle = "#ffd84a"; c.beginPath(); c.arc(x - k * 0.12, y + k * 0.12, k * 0.025, 0, PI * 2); c.arc(x + k * 0.12, y + k * 0.12, k * 0.025, 0, PI * 2); c.fill();
+    oell(c, x, y - k * 0.25, k * 0.16, k * 0.15, skin);
+    c.fillStyle = "#c7845a"; c.beginPath(); c.arc(x - k * 0.1, y - k * 0.2, k * 0.035, 0, PI * 2); c.arc(x + k * 0.1, y - k * 0.2, k * 0.035, 0, PI * 2); c.fill();
+    if (t % 3400 < 140) { c.strokeStyle = INK; c.lineWidth = Math.max(1, k * 0.02); c.beginPath(); c.moveTo(x - k * 0.085, y - k * 0.29); c.lineTo(x - k * 0.035, y - k * 0.29); c.moveTo(x + k * 0.035, y - k * 0.29); c.lineTo(x + k * 0.085, y - k * 0.29); c.stroke(); }
+    else { c.fillStyle = INK; c.beginPath(); c.arc(x - k * 0.06, y - k * 0.29, k * 0.022, 0, PI * 2); c.arc(x + k * 0.06, y - k * 0.29, k * 0.022, 0, PI * 2); c.fill(); }
+    c.strokeStyle = INK; c.lineWidth = Math.max(1, k * 0.025); c.beginPath(); c.moveTo(x - k * 0.1, y - k * 0.36); c.lineTo(x - k * 0.03, y - k * 0.33); c.moveTo(x + k * 0.1, y - k * 0.36); c.lineTo(x + k * 0.03, y - k * 0.33); c.stroke();
+    c.fillStyle = INK; c.beginPath(); c.moveTo(x, y - k * 0.22); c.quadraticCurveTo(x - k * 0.1, y - k * 0.24, x - k * 0.17, y - k * 0.13); c.quadraticCurveTo(x - k * 0.08, y - k * 0.17, x, y - k * 0.16); c.quadraticCurveTo(x + k * 0.08, y - k * 0.17, x + k * 0.17, y - k * 0.13); c.quadraticCurveTo(x + k * 0.1, y - k * 0.24, x, y - k * 0.22); c.fill();
+    oell(c, x, y - k * 0.4, k * 0.44, k * 0.09, hat);
+    c.fillStyle = shd(hat); c.beginPath(); c.ellipse(x, y - k * 0.38, k * 0.3, k * 0.04, 0, 0, PI); c.fill();
+    poly(c, [x - k * 0.15, y - k * 0.42, x - k * 0.12, y - k * 0.62, x, y - k * 0.68, x + k * 0.12, y - k * 0.62, x + k * 0.15, y - k * 0.42], hat);
+    c.fillStyle = "#d6202f"; c.fillRect(x - k * 0.145, y - k * 0.49, k * 0.29, k * 0.05);
+    inkLine(c, [x - k * 0.05, y - k * 0.14, x - k * 0.2, y - k * 0.1], k * 0.035, "#7a4a2a");
+    c.fillStyle = "#ff7a1a"; c.beginPath(); c.arc(x - k * 0.21, y - k * 0.1, k * 0.022, 0, PI * 2); c.fill();
+    if (!CALM) for (var j = 0; j < 3; j++) { var sp = ((t / 1500) + j / 3) % 1; c.fillStyle = "rgba(255,249,227," + (0.6 * (1 - sp)) + ")"; c.beginPath(); c.arc(x - k * 0.23 - sp * k * 0.12 + Math.sin(sp * 6) * k * 0.03, y - k * 0.14 - sp * k * 0.35, k * (0.025 + sp * 0.04), 0, PI * 2); c.fill(); }
+    var bx = x + k * 0.38 + Math.sin(t / 340) * k * 0.03, by = y + k * 0.22;
+    oell(c, bx, by, k * 0.15, k * 0.14, "#d9b98a");
+    poly(c, [bx - k * 0.06, by - k * 0.12, bx, by - k * 0.2, bx + k * 0.06, by - k * 0.12], "#d9b98a", 1);
+    c.fillStyle = "#1f8a4c"; c.font = Math.round(k * 0.18) + 'px "Bowlby One", "Arial Black", sans-serif'; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("$", bx, by + k * 0.01);
+  }
+
+  // Rancho: adobe walls in the player's color under a clay tile roof.
+  function drawRancho(c, x, y, k, col) {
+    LW = Math.max(1.2, k * 0.06);
+    c.fillStyle = "rgba(21,17,13,.4)"; c.beginPath(); c.ellipse(x, y + k * 0.32, k * 0.44, k * 0.1, 0, 0, PI * 2); c.fill();
+    orect(c, x - k * 0.3, y - k * 0.04, k * 0.6, k * 0.37, col);
+    c.fillStyle = shd(col); c.fillRect(x + k * 0.14, y - k * 0.02, k * 0.14, k * 0.33);
+    var tl = "#c8502e";
+    orect(c, x + k * 0.14, y - k * 0.46, k * 0.12, k * 0.2, "#b9552a");
+    poly(c, [x - k * 0.42, y, x - k * 0.3, y - k * 0.3, x + k * 0.3, y - k * 0.3, x + k * 0.42, y], tl);
+    c.strokeStyle = shd(tl); c.lineWidth = Math.max(1, k * 0.035);
+    for (var i = -3; i <= 3; i++) { c.beginPath(); c.moveTo(x + i * k * 0.085, y - k * 0.28); c.lineTo(x + i * k * 0.11, y - k * 0.02); c.stroke(); }
+    orect(c, x - k * 0.2, y + k * 0.13, k * 0.13, k * 0.2, INK, 0);
+    orect(c, x + k * 0.03, y + k * 0.08, k * 0.1, k * 0.09, "#ffe500", Math.max(1, k * 0.03));
+  }
+  // Pueblo: a church with a bell tower.
+  function drawPueblo(c, x, y, k, col) {
+    LW = Math.max(1.2, k * 0.06);
+    c.fillStyle = "rgba(21,17,13,.4)"; c.beginPath(); c.ellipse(x, y + k * 0.38, k * 0.6, k * 0.11, 0, 0, PI * 2); c.fill();
+    poly(c, [x - k * 0.5, y + k * 0.37, x - k * 0.5, y - k * 0.03, x - k * 0.21, y - k * 0.28, x + k * 0.08, y - k * 0.03, x + k * 0.08, y + k * 0.37], col);
+    c.fillStyle = INK; c.beginPath(); c.moveTo(x - k * 0.3, y + k * 0.37); c.lineTo(x - k * 0.3, y + k * 0.18); c.arc(x - k * 0.21, y + k * 0.18, k * 0.09, PI, 0); c.lineTo(x - k * 0.12, y + k * 0.37); c.closePath(); c.fill();
+    oell(c, x - k * 0.21, y - k * 0.04, k * 0.06, k * 0.06, "#ffe500", 0, Math.max(1, k * 0.03));
+    orect(c, x + k * 0.08, y - k * 0.36, k * 0.3, k * 0.73, col);
+    c.fillStyle = shd(col); c.fillRect(x + k * 0.27, y - k * 0.34, k * 0.09, k * 0.69);
+    c.fillStyle = INK; c.beginPath(); c.moveTo(x + k * 0.16, y - k * 0.08); c.lineTo(x + k * 0.16, y - k * 0.2); c.arc(x + k * 0.23, y - k * 0.2, k * 0.07, PI, 0); c.lineTo(x + k * 0.3, y - k * 0.08); c.closePath(); c.fill();
+    oell(c, x + k * 0.23, y - k * 0.15, k * 0.04, k * 0.05, "#ffd84a", 0, 0);
+    c.beginPath(); c.moveTo(x + k * 0.06, y - k * 0.36); c.arc(x + k * 0.23, y - k * 0.36, k * 0.17, PI, 0); c.closePath();
+    c.fillStyle = hil(col); c.fill(); c.lineWidth = LW; c.strokeStyle = INK; c.stroke();
+    inkLine(c, [x + k * 0.23, y - k * 0.53, x + k * 0.23, y - k * 0.72], k * 0.04, "#ffe500");
+    inkLine(c, [x + k * 0.16, y - k * 0.65, x + k * 0.3, y - k * 0.65], k * 0.04, "#ffe500");
+  }
+  function drawCalzada(c, ax, ay, bx, by, s, col) {
+    var dx = bx - ax, dy = by - ay, f = 0.2;
+    c.lineCap = "round";
+    c.strokeStyle = INK; c.lineWidth = s * 0.17; c.beginPath(); c.moveTo(ax + dx * f, ay + dy * f); c.lineTo(bx - dx * f, by - dy * f); c.stroke();
+    c.strokeStyle = col; c.lineWidth = s * 0.1; c.stroke();
+    c.strokeStyle = hil(col); c.lineWidth = s * 0.03; c.beginPath(); c.moveTo(ax + dx * f, ay + dy * f - s * 0.02); c.lineTo(bx - dx * f, by - dy * f - s * 0.02); c.stroke();
+  }
+  // Vía de tren: wooden sleepers with two rails in the player's color.
+  function drawVia(c, ax, ay, bx, by, s, col) {
+    var mx = (ax + bx) / 2, my = (ay + by) / 2, ang = Math.atan2(by - ay, bx - ax), L = Math.hypot(bx - ax, by - ay) * 0.36;
+    c.save(); c.translate(mx, my); c.rotate(ang);
+    LW = Math.max(1, s * 0.022);
+    for (var i = -3; i <= 3; i++) orect(c, i * L / 3.3 - s * 0.028, -s * 0.11, s * 0.056, s * 0.22, "#7a4a2a");
+    inkLine(c, [-L, -s * 0.055, L, -s * 0.055], s * 0.035, col);
+    inkLine(c, [-L, s * 0.055, L, s * 0.055], s * 0.035, col);
+    c.restore();
+  }
+  // A federal soldier in a kepi walks along the track.
+  function drawFederal(c, x, y, k, t) {
+    var b = Math.abs(Math.sin(t / 160)) * k * 0.05, cap = "#2b3a6b", lg = Math.sin(t / 160) * k * 0.07;
+    inkLine(c, [x - k * 0.06, y - k * 0.04, x - k * 0.06 + lg, y + k * 0.06], k * 0.06, "#2b3a6b");
+    inkLine(c, [x + k * 0.06, y - k * 0.04, x + k * 0.06 - lg, y + k * 0.06], k * 0.06, "#2b3a6b");
+    inkLine(c, [x + k * 0.16, y - k * 0.02, x + k * 0.2, y - k * 0.5], k * 0.035, "#5a3418");
+    y -= b;
+    oell(c, x, y - k * 0.12, k * 0.17, k * 0.15, "#4a5a3a");
+    oell(c, x, y - k * 0.36, k * 0.13, k * 0.13, "#d89a6a");
+    c.fillStyle = INK; c.beginPath(); c.arc(x - k * 0.045, y - k * 0.38, k * 0.02, 0, PI * 2); c.arc(x + k * 0.045, y - k * 0.38, k * 0.02, 0, PI * 2); c.fill();
+    c.fillRect(x - k * 0.08, y - k * 0.31, k * 0.16, k * 0.03);
+    poly(c, [x - k * 0.13, y - k * 0.44, x - k * 0.11, y - k * 0.62, x + k * 0.11, y - k * 0.62, x + k * 0.13, y - k * 0.44], cap);
+    c.fillStyle = "#d6202f"; c.fillRect(x - k * 0.12, y - k * 0.5, k * 0.24, k * 0.04);
+    poly(c, [x - k * 0.15, y - k * 0.44, x + k * 0.15, y - k * 0.44, x + k * 0.2, y - k * 0.4, x - k * 0.08, y - k * 0.4], INK, 0);
+  }
+
+  // Icons for the panel, drawn with the same art as the tiles.
+  var ICONS = {};
+  function makeIcons() {
+    RES.forEach(function (r) {
+      var cv = document.createElement("canvas"); cv.width = 96; cv.height = 96;
+      drawTile(cv.getContext("2d"), RES_TILE[r], 48, 48, 46, true);
+      ICONS[r] = cv.toDataURL();
+    });
+    var draw = {
+      amate: function (c) { LW = 3; orect(c, 20, 18, 56, 62, "#f6f2e4"); c.fillStyle = INK; c.fillRect(26, 25, 44, 10); c.fillStyle = "#c9a27a"; c.fillRect(26, 42, 18, 18); c.strokeStyle = INK; c.lineWidth = 2; c.strokeRect(26, 42, 18, 18); c.fillStyle = "#8a8170"; [42, 49, 56, 66, 72].forEach(function (yy, i) { c.fillRect(i < 3 ? 48 : 26, yy, i < 3 ? 22 : 44, 3); }); },
+      huipil: function (c) { LW = 3; var cols = ["#e8262b", "#ffd84a", "#1f8a4c", "#ff2e88", "#19d3e6", "#e8262b"]; cols.forEach(function (cl, i) { c.fillStyle = cl; c.fillRect(24, 16 + i * 10, 48, 10); }); c.strokeStyle = INK; c.lineWidth = 3; c.strokeRect(24, 16, 48, 60); c.lineWidth = 2; for (var i = 0; i < 7; i++) { c.beginPath(); c.moveTo(27 + i * 7, 76); c.lineTo(27 + i * 7, 84); c.stroke(); } },
+      navaja: function (c) { LW = 3; oell(c, 48, 70, 26, 9, "#aeb4bf"); oell(c, 48, 62, 26, 9, "#cfd4dc"); oell(c, 48, 42, 24, 22, "#e4e8ee"); c.fillStyle = INK; c.font = '30px "Bowlby One", "Arial Black", sans-serif'; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("$", 48, 43); },
+      pescado: function (c) {
+        LW = 3; c.save(); c.translate(48, 50); c.rotate(-0.6);
+        orect(c, -4, -44, 8, 36, "#5a3418"); orect(c, -6, -50, 12, 9, "#2b1a10");
+        oell(c, 0, 18, 18, 17, "#e0913a"); oell(c, 0, -4, 13, 12, "#e0913a");
+        c.fillStyle = "#e0913a"; c.fillRect(-11, -2, 22, 12);
+        c.fillStyle = INK; c.beginPath(); c.arc(0, 6, 5, 0, PI * 2); c.fill();
+        c.strokeStyle = "#f6f2e4"; c.lineWidth = 1; for (var i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(i * 2.5, -44); c.lineTo(i * 2.5, 26); c.stroke(); }
+        orect(c, -7, 24, 14, 4, INK, 0);
+        c.restore();
+      }
+    };
+    COM.concat(["pescado"]).forEach(function (k) {
+      var cv = document.createElement("canvas"); cv.width = 96; cv.height = 96;
+      var c = cv.getContext("2d");
+      oell(c, 48, 48, 44, 44, k === "pescado" ? "#ff7a1a" : "#f4ead0", 0, 3);
+      draw[k](c);
+      ICONS[k] = cv.toDataURL();
+    });
+  }
+  function icon(r, cls) { return '<img class="' + (cls || "") + '" src="' + ICONS[r] + '" alt="' + NAME[r] + '">'; }
+
+  // ---------- Character portraits, one per oficio ----------
+  var AVA = {};
+  function avatar(of, col) {
+    var key = of + col; if (AVA[key]) return AVA[key];
+    var cv = document.createElement("canvas"); cv.width = 96; cv.height = 96;
+    var c = cv.getContext("2d"); LW = 3;
+    var skin = { tameme: "#c27f52", tallador: "#b9734a", pochteca: "#d89a6a", ticitl: "#a8673f", arquitecto: "#e0a878", astronomo: "#c98a5c" }[of] || "#d89a6a";
+    var hair = "#2a1a12", woman = of === "pochteca" || of === "ticitl" || of === "astronomo";
+    c.save(); c.beginPath(); c.arc(48, 48, 45, 0, PI * 2); c.clip();
+    c.fillStyle = col; c.fillRect(0, 0, 96, 96);
+    c.fillStyle = hil(col); c.beginPath(); c.arc(48, 30, 40, 0, PI * 2); c.fill();
+    if (woman && of !== "astronomo") { inkLine(c, [30, 50, 26, 84], 9, of === "ticitl" ? "#9a9aa6" : hair); inkLine(c, [66, 50, 70, 84], 9, of === "ticitl" ? "#9a9aa6" : hair); }
+    if (of === "astronomo") { inkLine(c, [31, 52, 24, 88], 8, hair); inkLine(c, [65, 52, 72, 88], 8, hair); }
+    var shirt = { tameme: "#f6f2e4", tallador: "#5f6f8a", pochteca: "#ff2e88", ticitl: "#2b3a6b", arquitecto: "#2b2a3a", astronomo: "#d9c9a0" }[of];
+    poly(c, [8, 100, 14, 80, 32, 70, 64, 70, 82, 80, 88, 100], shirt);
+    if (of === "pochteca") { c.fillStyle = "#ffd84a"; for (var i = 0; i < 4; i++) c.fillRect(14 + i * 20, 82, 10, 18); }
+    if (of === "ticitl") { c.fillStyle = "#19d3e6"; c.fillRect(10, 86, 76, 4); }
+    if (of === "arquitecto") { poly(c, [40, 70, 48, 84, 56, 70], "#f6f2e4", 2); poly(c, [42, 74, 48, 78, 54, 74, 54, 80, 48, 78, 42, 80], "#d6202f", 2); }
+    if (of === "tameme") poly(c, [36, 70, 48, 86, 60, 70], "#e8262b", 2);
+    if (of === "astronomo") { inkLine(c, [20, 76, 70, 100], 6, "#7a4a2a"); inkLine(c, [76, 76, 26, 100], 6, "#7a4a2a"); c.fillStyle = "#ffd84a"; [[30, 81], [40, 86], [62, 83], [54, 88]].forEach(function (b) { c.fillRect(b[0], b[1], 3, 6); }); }
+    if (of === "tallador") { orect(c, 34, 76, 28, 24, "#3c5a8a", 2); }
+    oell(c, 48, 50, 17, 20, skin, 0, 3);
+    oell(c, 31, 52, 4, 6, skin, 0, 2); oell(c, 65, 52, 4, 6, skin, 0, 2);
+    if (woman && of !== "astronomo") { c.fillStyle = of === "ticitl" ? "#9a9aa6" : hair; c.beginPath(); c.ellipse(48, 36, 19, 10, 0, PI, 0); c.fill(); c.fillRect(30, 35, 36, 5); }
+    if (of === "pochteca") { oell(c, 48, 24, 9, 8, hair, 0, 2); oell(c, 31, 61, 2.5, 3.5, "#ffd84a", 0, 1); oell(c, 65, 61, 2.5, 3.5, "#ffd84a", 0, 1); oell(c, 62, 32, 5, 5, "#e8262b", 0, 2); }
+    c.fillStyle = INK;
+    if (of === "ticitl") { c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); c.arc(41, 49, 3, PI, 0); c.arc(55, 49, 3, PI, 0); c.stroke(); }
+    else { c.beginPath(); c.arc(41, 49, 2.6, 0, PI * 2); c.arc(55, 49, 2.6, 0, PI * 2); c.fill(); }
+    c.fillStyle = "rgba(232,38,43,.35)"; c.beginPath(); c.arc(37, 57, 4, 0, PI * 2); c.arc(59, 57, 4, 0, PI * 2); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 2.2; c.lineCap = "round"; c.beginPath(); c.arc(48, 60, 5, 0.2, PI - 0.2); c.stroke();
+    if (of === "astronomo") { c.beginPath(); c.moveTo(37, 44); c.lineTo(44, 46); c.moveTo(59, 44); c.lineTo(52, 46); c.stroke(); }
+    if (!woman) { c.fillStyle = of === "arquitecto" ? "#5a3418" : INK; c.beginPath(); c.moveTo(48, 56); c.quadraticCurveTo(40, 54, of === "arquitecto" ? 41 : 35, 61); c.quadraticCurveTo(42, 58, 48, 59); c.quadraticCurveTo(54, 58, of === "arquitecto" ? 55 : 61, 61); c.quadraticCurveTo(56, 54, 48, 56); c.fill(); }
+    if (of === "tallador") { c.fillStyle = "rgba(21,17,13,.25)"; c.beginPath(); c.arc(58, 62, 4, 0, PI * 2); c.fill(); }
+    if (of === "arquitecto") { c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); c.arc(41, 49, 6, 0, PI * 2); c.moveTo(61, 49); c.arc(55, 49, 6, 0, PI * 2); c.moveTo(47, 49); c.lineTo(49, 49); c.stroke(); }
+    if (of === "tameme" || of === "astronomo") {
+      var hc = of === "tameme" ? "#e2c27a" : "#c9a27a";
+      c.save(); if (of === "astronomo") { c.translate(48, 34); c.rotate(-0.15); c.translate(-48, -34); }
+      oell(c, 48, 36, 42, 9, hc, 0, 3);
+      poly(c, [34, 36, 37, 16, 48, 11, 59, 16, 62, 36], hc, 3);
+      c.fillStyle = of === "tameme" ? "#d6202f" : "#1f8a4c"; c.fillRect(35, 27, 26, 5);
+      c.restore();
+    }
+    if (of === "tallador") {
+      c.beginPath(); c.arc(48, 38, 21, PI, 0); c.closePath(); c.fillStyle = "#e9a81c"; c.fill(); c.lineWidth = 3; c.strokeStyle = INK; c.stroke();
+      orect(c, 24, 36, 48, 5, "#c98a12", 2);
+      c.save(); c.shadowColor = "#fff27a"; c.shadowBlur = 10; oell(c, 48, 26, 6, 6, "#fff9c2", 0, 2); c.restore();
+    }
+    if (of === "arquitecto") {
+      oell(c, 48, 33, 25, 5, "#2b2a3a", 0, 3);
+      c.beginPath(); c.moveTo(33, 33); c.quadraticCurveTo(33, 12, 48, 12); c.quadraticCurveTo(63, 12, 63, 33); c.closePath(); c.fillStyle = "#2b2a3a"; c.fill(); c.lineWidth = 3; c.strokeStyle = INK; c.stroke();
+      inkLine(c, [64, 40, 74, 30], 3, "#ffd84a");
+    }
+    if (of === "ticitl") { inkLine(c, [70, 96, 76, 70], 3, "#3f8f31"); oell(c, 72, 74, 5, 3, "#4fa83c", -0.6, 1.5); oell(c, 78, 70, 5, 3, "#4fa83c", 0.6, 1.5); oell(c, 74, 66, 3, 5, "#4fa83c", 0, 1.5); }
+    c.restore();
+    c.beginPath(); c.arc(48, 48, 45, 0, PI * 2); c.lineWidth = 4; c.strokeStyle = INK; c.stroke();
+    return (AVA[key] = cv.toDataURL());
+  }
+  function avaImg(o, cls) { return '<img class="ava ' + (cls || "") + '" src="' + avatar(o.oficio, o.color) + '" alt="">'; }
+
+  // ---------- Board effects and little animations ----------
+  var FX = [], WALK = null, ICON_IMG = {};
+  var CALM = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function fx(o) { o.t0 = performance.now() + (o.delay || 0); FX.push(o); }
+  function ease(p) { return 1 - Math.pow(1 - p, 3); }
+  function buildFx(vi, txt) {
+    var v = G.verts[vi]; fx({ k: "bld", vi: vi, dur: 520 }); fx({ k: "puff", x: v.x, y: v.y, dur: 700 });
+    if (txt) fx({ k: "txt", x: v.x, y: v.y - 0.3, txt: txt, col: P(v.b.p).color, dur: 1300 });
+  }
+  function routeFx(ei) { var e = G.edges[ei], a = G.verts[e.a], b = G.verts[e.b]; fx({ k: "puff", x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, dur: 500, small: true }); }
+  function drawFx(c, t) {
+    FX = FX.filter(function (f) { return t < f.t0 + f.dur; });
+    FX.forEach(function (f) {
+      var p = (t - f.t0) / f.dur; if (p < 0) return;
+      var x = X(f.x), y = Y(f.y);
+      if (f.k === "puff") {
+        var n = f.small ? 6 : 9, R = S * (f.small ? 0.25 : 0.45) * ease(p);
+        c.fillStyle = "rgba(240,217,160," + (0.85 * (1 - p)) + ")";
+        for (var i = 0; i < n; i++) { var a = i / n * PI * 2; c.beginPath(); c.arc(x + Math.cos(a) * R, y + Math.sin(a) * R * 0.6 + S * 0.1, S * (f.small ? 0.06 : 0.09) * (1 - p * 0.5), 0, PI * 2); c.fill(); }
+      } else if (f.k === "bld") {
+        var v = G.verts[f.vi]; if (!v.b) return;
+        var sc = 1 + 0.45 * Math.sin(p * PI) * (1 - p);
+        if (v.b.lvl === 1) drawRancho(c, x, y, S * 0.44 * sc, P(v.b.p).color); else drawPueblo(c, x, y, S * 0.5 * sc, P(v.b.p).color);
+      } else if (f.k === "txt") {
+        c.globalAlpha = p < 0.8 ? 1 : (1 - p) * 5;
+        c.font = Math.round(S * 0.32) + 'px "Bowlby One", "Arial Black", sans-serif'; c.textAlign = "center"; c.textBaseline = "middle";
+        var yy = y - S * 0.6 * ease(p); c.lineWidth = S * 0.08; c.strokeStyle = INK; c.strokeText(f.txt, x, yy); c.fillStyle = f.col || "#ffe500"; c.fillText(f.txt, x, yy);
+        c.globalAlpha = 1;
+      } else if (f.k === "res") {
+        var img = ICON_IMG[f.r]; if (!img) return;
+        var s2 = S * 0.5 * (p < 0.2 ? ease(p / 0.2) * 1.2 : 1.2 - (p - 0.2) * 0.3);
+        c.globalAlpha = p < 0.75 ? 1 : (1 - p) * 4;
+        c.drawImage(img, x - s2 / 2, y - S * 0.2 - S * 0.7 * ease(p) - s2 / 2, s2, s2);
+        c.globalAlpha = 1;
+      }
+    });
+  }
+  // Smoke from rancho chimneys, a hawk over the sierra and tumbleweeds in the desert.
+  function drawAmbient(c, t) {
+    if (CALM) return;
+    G.verts.forEach(function (v, i) {
+      if (!v.b || v.b.lvl !== 1) return;
+      var k = S * 0.44, cx = X(v.x) + k * 0.2, cy = Y(v.y) - k * 0.48;
+      for (var j = 0; j < 3; j++) {
+        var p = ((t / 2200) + j / 3 + i * 0.137) % 1;
+        c.fillStyle = "rgba(255,249,227," + (0.55 * (1 - p)) + ")";
+        c.beginPath(); c.arc(cx + Math.sin(p * 5 + i) * k * 0.12 + p * k * 0.25, cy - p * k * 0.9, k * (0.06 + p * 0.1), 0, PI * 2); c.fill();
+      }
+    });
+    var sel = G.hexes.filter(function (h) { return h.type === "selva" && !h.fog; });
+    if (sel.length) {
+      var h = sel[Math.floor(t / 15000) % sel.length], a = t / 1600, hx = X(h.x) + Math.cos(a) * S * 0.35, hy = Y(h.y) - S * 0.35 + Math.sin(a) * S * 0.15, fl = Math.sin(t / 110) * S * 0.05;
+      c.strokeStyle = INK; c.lineWidth = Math.max(1.5, S * 0.03); c.lineCap = "round";
+      c.beginPath(); c.moveTo(hx - S * 0.12, hy - fl); c.quadraticCurveTo(hx - S * 0.05, hy - S * 0.06, hx, hy); c.quadraticCurveTo(hx + S * 0.05, hy - S * 0.06, hx + S * 0.12, hy - fl); c.stroke();
+    }
+    var des = G.hexes.filter(function (h) { return h.type === "lago" && !h.fog; });
+    if (des.length) {
+      var per = 5200, k2 = Math.floor(t / per), p2 = (t % per) / per, d = des[k2 % des.length], dir = k2 % 2 ? 1 : -1;
+      var tx = X(d.x) + dir * (p2 - 0.5) * S * 1.5, ty = Y(d.y) + S * 0.45 - Math.abs(Math.sin(p2 * PI * 4)) * S * 0.18, r = S * 0.1;
+      c.globalAlpha = Math.min(1, Math.sin(p2 * PI) * 3);
+      c.save(); c.translate(tx, ty); c.rotate(dir * p2 * PI * 6);
+      c.strokeStyle = "#8a5a2c"; c.lineWidth = Math.max(1.2, S * 0.025);
+      c.beginPath(); for (var q = 0; q < 7; q++) c.ellipse(0, 0, r, r * 0.6, q * 0.9, 0, PI * 2); c.stroke();
+      c.restore(); c.globalAlpha = 1;
+    }
+  }
+  function caciquePos(t) {
+    var ch = G.hexes[G.chupa], x = X(ch.x) + S * 0.02, y = Y(ch.y) - S * 0.2;
+    if (!WALK || CALM) return { x: x, y: y };
+    var p = (t - WALK.t0) / 900;
+    if (p >= 1) { WALK = null; fx({ k: "puff", x: ch.x, y: ch.y, dur: 600 }); return { x: x, y: y }; }
+    var f = G.hexes[WALK.from], fx0 = X(f.x) + S * 0.02, fy0 = Y(f.y) - S * 0.2, e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    return { x: fx0 + (x - fx0) * e, y: fy0 + (y - fy0) * e - Math.abs(Math.sin(p * PI * 3)) * S * 0.35 };
+  }
+
+  // ---------- Board ----------
+  function ring(q, r) { return Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)); }
+  function buildBoard(opts) {
+    var R = opts.lago ? 3 : 2;
+    var hexes = [], verts = [], edges = [], vmap = {}, emap = {};
+    var types;
+    if (!opts.lago) types = shuffle(["selva", "selva", "selva", "selva", "ribera", "ribera", "ribera", "milpa", "milpa", "milpa", "milpa", "algodonal", "algodonal", "algodonal", "algodonal", "volcan", "volcan", "volcan", "malpais"]);
+    else {
+      var land = [];
+      [["selva", 7], ["ribera", 6], ["milpa", 6], ["algodonal", 6], ["volcan", 5]].forEach(function (t) { for (var i = 0; i < t[1]; i++) land.push(t[0]); });
+      types = shuffle(land);
+    }
+    var cells = [];
+    for (var r = -R; r <= R; r++) for (var q = -R; q <= R; q++) if (Math.abs(q + r) <= R) cells.push([q, r]);
+    var malIdx = -1;
+    if (opts.lago) { var ring2 = cells.map(function (c, i) { return i; }).filter(function (i) { return ring(cells[i][0], cells[i][1]) === 2; }); malIdx = pick(ring2); }
+    var k = 0;
+    cells.forEach(function (c, i) {
+      var d = ring(c[0], c[1]), h = { q: c[0], r: c[1], num: 0, x: SQ3 * (c[0] + c[1] / 2), y: 1.5 * c[1], v: [], e: [], fog: false, island: false };
+      if (!opts.lago) h.type = types[k++];
+      else if (d === 1) h.type = "lago";
+      else if (i === malIdx) h.type = "malpais";
+      else { h.type = types[k++]; h.island = d === 0; h.fog = d === 3; }
+      hexes.push(h);
+    });
+    hexes.forEach(function (h, hi) {
+      for (var i = 0; i < 6; i++) {
+        var a = PI / 180 * (60 * i - 30), x = h.x + Math.cos(a), y = h.y + Math.sin(a);
+        var key = Math.round(x * 100) + "," + Math.round(y * 100);
+        if (vmap[key] === undefined) { vmap[key] = verts.length; verts.push({ x: x, y: y, h: [], adj: [], e: [], b: null }); }
+        h.v.push(vmap[key]); verts[vmap[key]].h.push(hi);
+      }
+    });
+    hexes.forEach(function (h, hi) {
+      for (var i = 0; i < 6; i++) {
+        var va = h.v[i], vb = h.v[(i + 1) % 6], ek = Math.min(va, vb) + "-" + Math.max(va, vb);
+        if (emap[ek] === undefined) {
+          emap[ek] = edges.length;
+          edges.push({ a: va, b: vb, r: null, kind: null, h: [] });
+          verts[va].adj.push(vb); verts[vb].adj.push(va);
+          verts[va].e.push(emap[ek]); verts[vb].e.push(emap[ek]);
+        }
+        edges[emap[ek]].h.push(hi);
+        h.e.push(emap[ek]);
+      }
+    });
+    edges.forEach(function (e) {
+      e.land = e.h.some(function (hi) { return !TILE[hexes[hi].type].water; });
+      e.water = e.h.some(function (hi) { return TILE[hexes[hi].type].water; });
+    });
+    assignNumbers(hexes, opts.pesca);
+    return { hexes: hexes, verts: verts, edges: edges, R: R };
+  }
+  function hexNeighbors(hexes, h) {
+    var d = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1]];
+    return hexes.filter(function (o) { return d.some(function (dd) { return o.q === h.q + dd[0] && o.r === h.r + dd[1]; }); });
+  }
+  function assignNumbers(hexes, pesca) {
+    var base = [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12];
+    var lake = [4, 5, 6, 8, 9, 10];
+    var needs = hexes.filter(function (h) { return TILE[h.type].res; });
+    for (var t = 0; t < 3000; t++) {
+      var ns = shuffle(base.slice()).concat(shuffle(base.slice())), k = 0;
+      hexes.forEach(function (h) { h.num = 0; });
+      needs.forEach(function (h) { h.num = ns[k++]; });
+      var bad = needs.some(function (h) { return (h.num === 6 || h.num === 8) && hexNeighbors(hexes, h).some(function (o) { return TILE[o.type].res && (o.num === 6 || o.num === 8); }); });
+      if (!bad) break;
+    }
+    if (pesca) { var ln = shuffle(lake.slice()), j = 0; hexes.forEach(function (h) { if (h.type === "lago") h.num = ln[j++ % ln.length]; }); }
+  }
+
+  // ---------- Game state ----------
+  var G = null;
+  window.__labola = function () { return G; };
+
+  function newGame(cfg, opts) {
+    var b = buildBoard(opts);
+    var encDeck = [];
+    [["aguila", 14], ["templo", 5], ["tamemes", 2], ["tributo", 2], ["chisme", 2]].forEach(function (e) { for (var i = 0; i < e[1]; i++) encDeck.push(e[0]); });
+    G = {
+      hexes: b.hexes, verts: b.verts, edges: b.edges, R: b.R, opts: opts,
+      goal: 10 + (opts.lago ? 2 : 0) + (opts.senorios ? 3 : 0),
+      players: cfg.map(function (c, i) {
+        return { name: c.name, color: COLORS[i].c, bot: c.bot, oficio: c.oficio,
+          res: { madera: 0, barro: 0, maiz: 0, algodon: 0, obsidiana: 0, amate: 0, huipil: 0, navaja: 0 },
+          fish: 0, cards: [], army: 0, aldeas: 0, ciudades: 0, calzadas: 0, canoas: 0, road: 0, jaguars: 0, heroes: 0,
+          imp: { saber: 0, tianguis: 0, guerra: 0 } };
+      }),
+      chupa: b.hexes.findIndex(function (h) { return h.type === "malpais"; }),
+      encDeck: shuffle(encDeck), evDeck: [], event: null, dust: -1, flash: null, volcanDone: false,
+      cur: 0, phase: "setup", mode: null, round: 0, dice: null,
+      setupOrder: [], setupIdx: 0, setupV: -1,
+      roadHolder: -1, armyHolder: -1, founder: -1, ajolote: -1, senor: { saber: -1, tianguis: -1, guerra: -1 },
+      fuego: 0, fuegos: 0, played: false, freeRoads: 0, botTrades: 0, lastViewer: -1, noSteal: false,
+      log: [], winner: -1, turnCount: 0
+    };
+    var n = G.players.length;
+    for (var i = 0; i < n; i++) G.setupOrder.push(i);
+    for (i = n - 1; i >= 0; i--) G.setupOrder.push(i);
+    $("setup").classList.add("hidden");
+    $("game").classList.remove("hidden");
+    $("log").innerHTML = "";
+    log("Empezó la bola. A poner ranchos.");
+    if (opts.lago) log("En medio hay desierto y solo se cruza por vía. La Capital espera a quien llegue primero (+2), y la orilla del mapa sigue tapada.");
+    if (opts.pesca) log("El desierto da corridos, y anda suelto el Gallo Giro.");
+    if (opts.senorios) log("Cada vez que salgan dobles, los federales se acercan un día.");
+    resize();
+    setupTurn();
+  }
+
+  function P(i) { return G.players[i === undefined ? G.cur : i]; }
+  function ALLK() { return G.opts.senorios ? RES.concat(COM) : RES; }
+  function total(p) { var t = 0; RES.concat(COM).forEach(function (r) { t += p.res[r]; }); return t; }
+  function isWater(hi) { return TILE[G.hexes[hi].type].water; }
+  function costOf(pi, what) {
+    var p = P(pi), c = {};
+    for (var r in COST[what]) c[r] = COST[what][r];
+    if ((what === "calzada" || what === "canoa") && (p.oficio === "tameme" || evId() === "pochtecas")) c = { madera: 1 };
+    if (what === "ciudad" && p.oficio === "arquitecto") c.obsidiana = 2;
+    if (what === "jaguar" && p.imp.guerra >= 2) c = { algodon: 1 };
+    if ((what === "calzada" || what === "canoa") && G.freeRoads > 0) c = {};
+    return c;
+  }
+  function has(p, cost) { for (var r in cost) if (p.res[r] < cost[r]) return false; return true; }
+  function pay(p, cost) { for (var r in cost) p.res[r] -= cost[r]; }
+  function evId() { return G.event ? G.event.id : null; }
+  function rate(pi, give) {
+    var p = P(pi), r = 4;
+    if (p.oficio === "pochteca") r--;
+    if (p.imp.tianguis >= 2) r--;
+    if (evId() === "tianguis") r--;
+    if (give && COM.indexOf(give) >= 0 && p.imp.tianguis >= 3) r = 2;
+    return Math.max(2, r);
+  }
+  function humans() { return G.players.filter(function (p) { return !p.bot; }).length; }
+  function isHumanTurn() { return G && G.winner < 0 && !P().bot; }
+  function defense(pi) { var p = P(pi); return p.jaguars + p.army + (p.imp.guerra >= 3 ? 1 : 0); }
+
+  function vp(pi, hidden) {
+    var p = P(pi), v = p.aldeas + p.ciudades * 2 + p.heroes;
+    if (G.roadHolder === pi) v += 2;
+    if (G.armyHolder === pi) v += 2;
+    if (G.founder === pi) v += 2;
+    if (G.ajolote === pi) v += 1;
+    IMP_IDS.forEach(function (k) { if (G.senor[k] === pi) v += 2; });
+    if (hidden) v += p.cards.filter(function (c) { return c.t === "templo"; }).length;
+    return v;
+  }
+
+  // ---------- Placement rules ----------
+  function spotFree(vi) { var v = G.verts[vi]; return !v.b && !v.adj.some(function (a) { return G.verts[a].b; }); }
+  function onIslandOnly(vi) { return !G.verts[vi].h.some(function (hi) { return !isWater(hi) && !G.hexes[hi].island; }); }
+  function aldeaOk(pi, vi, setup) {
+    if (!spotFree(vi)) return false;
+    var v = G.verts[vi];
+    if (!v.h.some(function (hi) { return !isWater(hi); })) return false;
+    if (setup) return !onIslandOnly(vi);
+    return v.e.some(function (e) { return G.edges[e].r === pi; });
+  }
+  function routeOk(pi, ei, kind, fromV) {
+    var e = G.edges[ei];
+    if (e.r !== null) return false;
+    if (kind === "calzada" && !e.land) return false;
+    if (kind === "canoa" && !e.water) return false;
+    if (fromV !== undefined) return e.a === fromV || e.b === fromV;
+    return [e.a, e.b].some(function (vi) {
+      var v = G.verts[vi];
+      if (v.b && v.b.p === pi) return true;
+      if (v.b && v.b.p !== pi) return false;
+      return v.e.some(function (x) { return x !== ei && G.edges[x].r === pi; });
+    });
+  }
+  function validVerts(pi, setup) { var o = []; for (var i = 0; i < G.verts.length; i++) if (aldeaOk(pi, i, setup)) o.push(i); return o; }
+  function validEdges(pi, kind, fromV) { var o = []; for (var i = 0; i < G.edges.length; i++) if (routeOk(pi, i, kind, fromV)) o.push(i); return o; }
+  function setupEdges(pi, vi) { var o = []; G.verts[vi].e.forEach(function (ei) { if (G.edges[ei].r === null) o.push(ei); }); return o; }
+  function ownAldeas(pi) { var o = []; G.verts.forEach(function (v, i) { if (v.b && v.b.p === pi && v.b.lvl === 1) o.push(i); }); return o; }
+
+  function canBuild(what) {
+    var pi = G.cur, p = P();
+    if (G.phase !== "main") return false;
+    if (what === "calzada" || what === "canoa") {
+      if (what === "canoa" && !G.opts.lago) return false;
+      var lim = what === "calzada" ? p.calzadas < LIMIT.calzada : p.canoas < LIMIT.canoa;
+      return lim && (G.freeRoads > 0 || has(p, costOf(pi, what))) && validEdges(pi, what).length > 0;
+    }
+    if (what === "aldea") return has(p, costOf(pi, "aldea")) && p.aldeas < LIMIT.aldea && validVerts(pi).length > 0;
+    if (what === "ciudad") return has(p, costOf(pi, "ciudad")) && p.ciudades < LIMIT.ciudad && ownAldeas(pi).length > 0;
+    if (what === "codice") return has(p, costOf(pi, "codice")) && G.encDeck.length > 0;
+    if (what === "jaguar") return G.opts.senorios && has(p, costOf(pi, "jaguar")) && p.jaguars < LIMIT.jaguar;
+    return false;
+  }
+  function canImprove(pi, k) { var p = P(pi); return G.opts.senorios && p.ciudades > 0 && p.imp[k] < 4 && p.res[IMP[k].com] >= p.imp[k] + 1; }
+
+  // ---------- Longest route ----------
+  function roadLen(pi) {
+    var best = 0, used = {};
+    function walk(vi, depth) {
+      var v = G.verts[vi], m = 0;
+      if (depth > 0 && v.b && v.b.p !== pi) return 0;
+      v.e.forEach(function (ei) {
+        if (used[ei] || G.edges[ei].r !== pi) return;
+        used[ei] = 1;
+        var e = G.edges[ei], o = e.a === vi ? e.b : e.a;
+        m = Math.max(m, 1 + walk(o, depth + 1));
+        used[ei] = 0;
+      });
+      return m;
+    }
+    G.verts.forEach(function (v, vi) { if (v.e.some(function (ei) { return G.edges[ei].r === pi; })) best = Math.max(best, walk(vi, 0)); });
+    return best;
+  }
+  function updateAwards() {
+    var lens = G.players.map(function (p, i) { return (p.road = roadLen(i)); });
+    var h = G.roadHolder, prev = h;
+    if (h >= 0 && lens[h] < 5) h = -1;
+    if (h < 0) {
+      var mx = Math.max.apply(null, lens);
+      var who = lens.map(function (l, i) { return l === mx ? i : -1; }).filter(function (i) { return i >= 0; });
+      if (mx >= 5 && who.length === 1) h = who[0];
+    } else lens.forEach(function (l, i) { if (l > lens[h]) h = i; });
+    if (h !== prev) { G.roadHolder = h; if (h >= 0) log(P(h).name + " tiene el Camino Real (+2).", true); }
+    var a = G.armyHolder;
+    G.players.forEach(function (p, i) { if (p.army >= 3 && (a < 0 || p.army > P(a).army)) a = i; });
+    if (a !== G.armyHolder) { G.armyHolder = a; log(P(a).name + " tiene la División del Norte (+2).", true); }
+  }
+
+  // ---------- Log / toast ----------
+  function log(t, big) {
+    G.log.unshift(t);
+    var d = document.createElement("div"); d.textContent = t; if (big) d.style.fontWeight = "900";
+    var L = $("log"); L.insertBefore(d, L.firstChild);
+    while (L.children.length > 70) L.removeChild(L.lastChild);
+    if (big) toast(t);
+  }
+  var toastT = 0;
+  function toast(t) {
+    var el = $("toast"); el.textContent = t; el.classList.add("show");
+    clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove("show"); }, FAST ? 50 : 2400);
+  }
+  function resList(gain) {
+    var a = [];
+    RES.concat(COM, ["pescado"]).forEach(function (r) { if (gain[r]) a.push(gain[r] + " " + lc(r, gain[r])); });
+    return a.join(", ");
+  }
+
+  // ---------- Flow: setup ----------
+  function setupTurn() {
+    G.cur = G.setupOrder[G.setupIdx];
+    G.phase = "setup"; G.mode = "setupAldea";
+    if (P().bot) { render(); later(botSetup); }
+    else withCover(G.cur, render);
+  }
+  function placeSetupAldea(vi) {
+    var pi = G.cur, p = P();
+    G.verts[vi].b = { p: pi, lvl: 1 }; p.aldeas++;
+    G.setupV = vi; buildFx(vi);
+    if (G.setupIdx >= G.players.length) {
+      var gain = {};
+      G.verts[vi].h.forEach(function (hi) { var h = G.hexes[hi], r = TILE[h.type].res; if (r && !h.fog) { p.res[r]++; gain[r] = (gain[r] || 0) + 1; } });
+      log(p.name + " pone su segundo rancho y recibe " + (resList(gain) || "nada") + ".");
+    } else log(p.name + " pone su primer rancho.");
+    explore([vi]);
+    G.mode = "setupRuta";
+    dirty = true; render();
+  }
+  function placeSetupRoute(ei) {
+    var e = G.edges[ei], p = P();
+    e.r = G.cur; e.kind = e.land ? "calzada" : "canoa"; routeFx(ei);
+    if (e.kind === "calzada") p.calzadas++; else p.canoas++;
+    explore([e.a, e.b]);
+    G.setupIdx++; G.mode = null; dirty = true;
+    if (G.setupIdx < G.setupOrder.length) setupTurn();
+    else { G.cur = 0; newRound(); beginTurn(); }
+  }
+
+  // ---------- Flow: rounds and events ----------
+  function newRound() {
+    G.round++;
+    G.dust = -1;
+    if (!G.evDeck.length) {
+      var deck = EVENT_DECK.slice();
+      if (G.opts.senorios) deck.push("cometa", "cometa", "cuenta");
+      if (G.opts.pesca) deck.push("crecida");
+      G.evDeck = shuffle(deck.filter(function (e) { return !(e === "volcan" && G.volcanDone); }));
+    }
+    var id = G.evDeck.pop();
+    if (id === "volcan" && G.volcanDone) id = "siesta";
+    if (G.round === 1) { G.evDeck.push(id); id = "siesta"; }
+    G.event = { id: id, name: EVENTS[id].name, text: EVENTS[id].text };
+    applyEvent(id);
+    log("Ronda " + G.round + ": " + G.event.name + ".");
+    showBanner();
+    dirty = true;
+  }
+  function landNums() { return G.hexes.map(function (h, i) { return i; }).filter(function (i) { var h = G.hexes[i]; return h.num > 0 && !h.fog && !isWater(i); }); }
+  function applyEvent(id) {
+    var withNum = landNums();
+    if (id === "eclipse") {
+      var busy = withNum.filter(function (i) { return G.hexes[i].v.some(function (v) { return G.verts[v].b; }) && i !== G.chupa; });
+      G.dust = pick(busy.length ? busy : withNum);
+      G.event.text += " Le tocó a " + TILE[G.hexes[G.dust].type].name.toLowerCase() + " del " + G.hexes[G.dust].num + ".";
+    }
+    if (id === "temblor") {
+      var a = pick(withNum), others = withNum.filter(function (i) { return G.hexes[i].num !== G.hexes[a].num; }), b = pick(others);
+      var t = G.hexes[a].num; G.hexes[a].num = G.hexes[b].num; G.hexes[b].num = t;
+      G.flash = { list: [a, b], until: performance.now() + 4000 };
+      G.event.text += " El " + G.hexes[b].num + " y el " + G.hexes[a].num + " se cambiaron.";
+    }
+    if (id === "volcan") {
+      var m = G.hexes.findIndex(function (h) { return h.type === "malpais"; });
+      if (m >= 0) { G.hexes[m].type = "volcan"; G.hexes[m].num = pick([4, 5, 9, 10]); G.volcanDone = true; G.flash = { list: [m], until: performance.now() + 4000 }; G.event.text += " Ahora da plata con el " + G.hexes[m].num + "."; }
+    }
+    if (id === "fiesta") G.players.forEach(function (p) { var n = p.ciudades > 0 ? 2 : 1; for (var i = 0; i < n; i++) p.res[pick(RES)]++; });
+    if (id === "tributo") {
+      var v = G.players.map(function (p, i) { return vp(i); }), mn = Math.min.apply(null, v), who = [];
+      G.players.forEach(function (p, i) { if (v[i] === mn) { p.res[pick(RES)]++; p.res[pick(RES)]++; who.push(p.name); } });
+      G.event.text += " Le llegó a " + who.join(" y ") + ".";
+    }
+    if (id === "cometa") moveFuego(2);
+    if (id === "cuenta") moveFuego(-1);
+  }
+  function showBanner() { bannerText("Noticia de la ronda " + G.round, G.event.name, G.event.text); }
+  function bannerText(tag, name, text) {
+    var b = $("banner");
+    $("bnTag").textContent = tag; $("bnName").textContent = name; $("bnText").textContent = text;
+    b.classList.remove("hidden", "show"); void b.offsetWidth; b.classList.add("show");
+    clearTimeout(bannerText.t);
+    bannerText.t = setTimeout(function () { b.classList.add("hidden"); }, FAST ? 30 : 3400);
+  }
+  $("banner").onclick = function () { $("banner").classList.add("hidden"); };
+
+  // ---------- Flow: turns ----------
+  function beginTurn() {
+    G.phase = "roll"; G.mode = null; G.played = false; G.freeRoads = 0; G.botTrades = 0; G.turnCount++;
+    if (P().bot) { render(); later(botAct); }
+    else withCover(G.cur, render);
+  }
+  function endTurn() {
+    if (G.winner >= 0) return;
+    G.mode = null; G.freeRoads = 0;
+    G.cur = (G.cur + 1) % G.players.length;
+    if (G.cur === 0) newRound();
+    beginTurn();
+  }
+  function next() { render(); if (G.winner < 0 && P().bot) later(botAct); }
+
+  function rollDice() {
+    if (G.phase !== "roll") return;
+    var a = 1 + Math.floor(Math.random() * 6), b = 1 + Math.floor(Math.random() * 6);
+    G.dice = [a, b];
+    animateDice();
+    var n = a + b;
+    log(P().name + " tira " + n + (a === b ? " (dobles)" : "") + ".");
+    if (a === b && G.opts.senorios) moveFuego(1);
+    if (n === 7) {
+      toast("¡Siete! Llegó el Cacique");
+      if (G.ajolote >= 0) swimAjolote();
+      handleSeven(function () { startChupa("main"); });
+    } else {
+      produce(n);
+      G.phase = "main";
+      afterAction();
+      next();
+    }
+  }
+  function produce(n) {
+    var gains = G.players.map(function () { return {}; }), fxHex = {};
+    var e = evId();
+    function add(pi, k, x) { if (x > 0) gains[pi][k] = (gains[pi][k] || 0) + x; }
+    G.hexes.forEach(function (h, hi) {
+      if (h.num !== n || h.fog || hi === G.dust) return;
+      if (h.type === "lago") {
+        if (!G.opts.pesca) return;
+        var fm = e === "crecida" ? 2 : 1;
+        h.v.forEach(function (vi) { var b = G.verts[vi].b; if (b) { add(b.p, "pescado", b.lvl * fm); fxHex[hi] = "pescado"; } });
+        return;
+      }
+      var T = TILE[h.type], r = T.res; if (!r) return;
+      var m = 1;
+      if ((e === "sequia" && h.type === "milpa") || (e === "granizo" && h.type === "algodonal")) m = 0;
+      if ((e === "lluvias" && (h.type === "milpa" || h.type === "algodonal")) || (e === "popo" && h.type === "volcan")) m = 2;
+      h.v.forEach(function (vi) {
+        var b = G.verts[vi].b; if (!b) return;
+        if (hi === G.chupa && P(b.p).oficio !== "ticitl") return;
+        if (b.lvl === 2 && G.opts.senorios && T.com) { add(b.p, r, m); add(b.p, T.com, m); }
+        else add(b.p, r, b.lvl * m);
+        if (m) fxHex[hi] = r;
+      });
+    });
+    Object.keys(fxHex).forEach(function (hi, j) { var h = G.hexes[hi]; fx({ k: "res", x: h.x, y: h.y, r: fxHex[hi], dur: 1300, delay: j * 90 }); });
+    var any = false;
+    gains.forEach(function (g, pi) {
+      var p = P(pi);
+      if (p.oficio === "tallador" && g.obsidiana) g.obsidiana++;
+      var gotSomething = Object.keys(g).length > 0;
+      if (!gotSomething && p.imp.saber >= 2) { var low = RES.slice().sort(function (a, b) { return p.res[a] - p.res[b]; })[0]; g[low] = 1; log(p.name + " no sacó nada, pero leyó en el periódico dónde conseguir 1 " + lc(low, 1) + "."); }
+      Object.keys(g).forEach(function (k) { if (k === "pescado") p.fish += g[k]; else p.res[k] += g[k]; });
+      var t = resList(g); if (t) { any = true; log(p.name + " recibe " + t + "."); }
+      if (g.pescado && G.ajolote === -1 && Math.random() < 0.18) { G.ajolote = pi; log("¡" + p.name + " se ganó al Gallo Giro! Vale 1 punto mientras lo tenga.", true); }
+    });
+    if (!any) log("Nadie recibe nada.");
+    bumpHand = true;
+  }
+  function swimAjolote() {
+    var v = G.players.map(function (p, i) { return vp(i); }), mn = Math.min.apply(null, v);
+    if (v[G.ajolote] === mn) return;
+    var to = v.indexOf(mn);
+    log("Con el alboroto del 7, el Gallo Giro se fue volando con " + P(to).name + ".", true);
+    G.ajolote = to;
+  }
+  function moveFuego(d) {
+    if (!G.opts.senorios) return;
+    G.fuego = Math.max(0, G.fuego + d);
+    if (d > 0) log("Los federales van en " + Math.min(G.fuego, FUEGO_MAX) + " de " + FUEGO_MAX + ".");
+    if (G.fuego >= FUEGO_MAX) newFire();
+  }
+  function newFire() {
+    G.fuego = 0; G.fuegos++;
+    var att = 0, def = 0;
+    G.players.forEach(function (p, i) { att += p.ciudades; def += defense(i); });
+    var title = "¡Ahí vienen los federales!", text;
+    if (!att) text = "Llegaron, vieron puros ranchitos y se regresaron. No había pueblos que valieran la pena.";
+    else if (def >= att) {
+      var mx = Math.max.apply(null, G.players.map(function (p, i) { return defense(i); }));
+      var top = G.players.map(function (p, i) { return i; }).filter(function (i) { return defense(i) === mx; });
+      if (top.length === 1) { P(top[0]).heroes++; text = "Defensores (" + def + ") contra " + att + " pueblos. ¡Los corrieron! " + P(top[0]).name + " es Héroe del Pueblo (+1 punto)."; }
+      else { top.forEach(function (i) { P(i).res[pick(RES)]++; }); text = "Defensores (" + def + ") contra " + att + " pueblos. ¡Los corrieron! Hubo empate de héroes, y cada uno se lleva 1 recurso."; }
+    } else {
+      var owners = G.players.map(function (p, i) { return i; }).filter(function (i) { return P(i).ciudades > 0; });
+      var mn = Math.min.apply(null, owners.map(defense));
+      var lose = owners.filter(function (i) { return defense(i) === mn; });
+      lose.forEach(function (i) {
+        var vs = G.verts.map(function (v, k) { return k; }).filter(function (k) { return G.verts[k].b && G.verts[k].b.p === i && G.verts[k].b.lvl === 2; });
+        G.verts[pick(vs)].b.lvl = 1; P(i).ciudades--; P(i).aldeas++;
+      });
+      text = "Defensores (" + def + ") contra " + att + " pueblos. No alcanzó. A " + lose.map(function (i) { return P(i).name; }).join(" y ") + " le quitaron un pueblo, que vuelve a rancho.";
+      dirty = true;
+    }
+    log(title + ". " + text, true);
+    bannerText("Ataque " + G.fuegos, title, text);
+    updateAwards();
+  }
+  function handleSeven(done) {
+    G.phase = "discard";
+    var list = [];
+    G.players.forEach(function (p, i) { if (total(p) > 7 && p.oficio !== "astronomo") list.push(i); });
+    var turnHuman = !P().bot ? G.cur : -1;
+    (function step(k) {
+      if (k >= list.length) {
+        if (turnHuman >= 0 && G.lastViewer !== turnHuman) withCover(turnHuman, done); else done();
+        return;
+      }
+      var pi = list[k], p = P(pi), n = Math.floor(total(p) / 2);
+      if (p.bot) { botDiscard(pi, n); step(k + 1); }
+      else withCover(pi, function () { discardModal(pi, n, function () { step(k + 1); }); });
+    })(0);
+  }
+  function startChupa(ret, noSteal) {
+    G.phase = "chupa"; G.chupaReturn = ret; G.noSteal = !!noSteal;
+    if (P().bot) { render(); later(function () { botMoveChupa(); }); }
+    else { G.mode = "chupa"; render(); }
+  }
+  function chupaTargets() { return G.hexes.map(function (h, i) { return i; }).filter(function (i) { return i !== G.chupa && !G.hexes[i].fog && !isWater(i); }); }
+  function placeChupa(hi) {
+    if (hi !== G.chupa) WALK = { from: G.chupa, t0: performance.now() };
+    G.chupa = hi; G.mode = null; dirty = true;
+    var h = G.hexes[hi];
+    log(P().name + " le manda al Cacique a " + TILE[h.type].name.toLowerCase() + (h.num ? " del " + h.num : "") + ".");
+    if (G.noSteal) return finishChupa();
+    var vic = [];
+    h.v.forEach(function (vi) { var b = G.verts[vi].b; if (b && b.p !== G.cur && vic.indexOf(b.p) < 0 && total(P(b.p)) > 0 && P(b.p).oficio !== "ticitl") vic.push(b.p); });
+    chooseVictim(vic, function () { finishChupa(); });
+  }
+  function chooseVictim(vic, done) {
+    if (!vic.length) return done();
+    if (vic.length === 1) { steal(vic[0]); return done(); }
+    if (P().bot) { vic.sort(function (a, b) { return vp(b) - vp(a) || total(P(b)) - total(P(a)); }); steal(vic[0]); return done(); }
+    openModal('<h2>¿A quién le robas?</h2><div class="answers">' + vic.map(function (v) {
+      return '<div class="answer"><span class="dot" style="color:' + INK + ';background:' + P(v).color + '"></span><span>' + esc(P(v).name) + " · " + total(P(v)) + ' cartas</span><button class="btn" data-v="' + v + '">Robar</button></div>';
+    }).join("") + "</div>");
+    $("sheet").querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { closeModal(); steal(+b.dataset.v); done(); }; });
+  }
+  function steal(vi) {
+    var n = evId() === "hambre" && G.phase === "chupa" ? 2 : 1, got = [];
+    for (var i = 0; i < n; i++) {
+      var v = P(vi), pool = [];
+      RES.concat(COM).forEach(function (r) { for (var j = 0; j < v.res[r]; j++) pool.push(r); });
+      if (!pool.length) break;
+      var r = pick(pool); v.res[r]--; P().res[r]++; got.push(r);
+    }
+    var mine = humans() === 1 && (!P().bot || !P(vi).bot);
+    log(P().name + " le bajó " + got.length + " carta" + (got.length > 1 ? "s" : "") + " a " + P(vi).name + (mine && got.length ? " (" + got.map(lc).join(", ") + ")" : "") + ".");
+    bumpHand = true;
+  }
+  function finishChupa() { G.phase = G.chupaReturn; G.mode = null; G.noSteal = false; afterAction(); next(); }
+
+  // ---------- Actions ----------
+  function explore(vs) {
+    var p = P(), found = [];
+    vs.forEach(function (vi) {
+      G.verts[vi].h.forEach(function (hi) {
+        var h = G.hexes[hi]; if (!h.fog) return;
+        h.fog = false; found.push(hi);
+        var r = TILE[h.type].res;
+        if (r) p.res[r]++;
+        log("¡" + p.name + " exploró tierra nueva! Es " + TILE[h.type].name.toLowerCase() + (h.num ? " del " + h.num : "") + (r ? " y se lleva 1 " + lc(r) + " de regalo." : "."), true);
+      });
+    });
+    if (found.length) { G.flash = { list: found, until: performance.now() + 2500 }; bumpHand = true; dirty = true; }
+  }
+  function buildRoute(ei, kind) {
+    var p = P(), free = G.freeRoads > 0, e = G.edges[ei];
+    pay(p, costOf(G.cur, kind));
+    e.r = G.cur; e.kind = kind; routeFx(ei);
+    if (kind === "calzada") p.calzadas++; else p.canoas++;
+    if (free) G.freeRoads--;
+    log(p.name + (kind === "calzada" ? " hace un camino" : " tiende una vía") + (free ? " gratis" : "") + ".");
+    explore([e.a, e.b]);
+    if (G.freeRoads > 0 && !validEdges(G.cur, "calzada").length && !(G.opts.lago && validEdges(G.cur, "canoa").length)) G.freeRoads = 0;
+    if (!p.bot) { if (G.freeRoads > 0) { if (!validEdges(G.cur, kind).length) G.mode = kind === "calzada" ? "canoa" : "calzada"; } else if (!canBuild(kind)) G.mode = null; }
+    afterAction();
+  }
+  function buildAldea(vi) {
+    var p = P(); pay(p, costOf(G.cur, "aldea"));
+    G.verts[vi].b = { p: G.cur, lvl: 1 }; p.aldeas++;
+    buildFx(vi, "+1");
+    log(p.name + " levanta un rancho. Ya tiene dónde amarrar el caballo.");
+    explore([vi]);
+    if (G.opts.lago && G.founder < 0 && G.verts[vi].h.some(function (hi) { return G.hexes[hi].island; })) {
+      G.founder = G.cur; dirty = true;
+      fx({ k: "txt", x: G.verts[vi].x, y: G.verts[vi].y - 0.7, txt: "¡La Capital! +2", col: p.color, dur: 2000, delay: 300 });
+      log("¡" + p.name + " llegó primero a la Capital y se sentó en la silla! (+2)", true);
+    }
+    if (!canBuild("aldea")) G.mode = null;
+    afterAction();
+  }
+  function buildCiudad(vi) {
+    var p = P(); pay(p, costOf(G.cur, "ciudad"));
+    G.verts[vi].b.lvl = 2; p.aldeas--; p.ciudades++;
+    buildFx(vi, "+1");
+    log(p.name + " vuelve un rancho en pueblo. Con iglesia y kiosco.");
+    if (!canBuild("ciudad")) G.mode = null;
+    afterAction();
+  }
+  function buyCodice(free) {
+    var p = P(); if (!free) pay(p, costOf(G.cur, "codice"));
+    var t = G.encDeck.pop();
+    p.cards.push({ t: t, turn: G.turnCount });
+    log(p.name + " saca un plan.");
+    if (!p.bot) toast("Te salió " + ENC[t].name);
+    afterAction();
+  }
+  function buyJaguar() {
+    var p = P(); pay(p, costOf(G.cur, "jaguar"));
+    p.jaguars++;
+    log(p.name + " recluta un Dorado. Ya tiene " + defense(G.cur) + " de defensa.");
+    afterAction();
+  }
+  function improve(k) {
+    var pi = G.cur, p = P(), need = p.imp[k] + 1;
+    p.res[IMP[k].com] -= need; p.imp[k]++;
+    log(p.name + " sube su " + IMP[k].name + " a nivel " + p.imp[k] + ".");
+    if (p.imp[k] === 4 && G.senor[k] < 0) { G.senor[k] = pi; log("¡" + p.name + " tiene " + IMP[k].lv[3].replace(" (+2).", "") + "! (+2)", true); }
+    afterAction();
+  }
+  function canPlay(card) {
+    if (G.played || card.t === "templo" || card.turn === G.turnCount) return false;
+    if (G.phase !== "main" && !(G.phase === "roll" && card.t === "aguila")) return false;
+    if (card.t === "tamemes") return validEdges(G.cur, "calzada").length > 0 || (G.opts.lago && validEdges(G.cur, "canoa").length > 0);
+    return true;
+  }
+  function playCard(idx, choice) {
+    var p = P(), card = p.cards[idx];
+    p.cards.splice(idx, 1); G.played = true;
+    log(p.name + " juega " + ENC[card.t].name + ".", true);
+    if (card.t === "aguila") { p.army++; afterAction(); if (G.winner < 0) startChupa(G.phase); return; }
+    if (card.t === "tamemes") { G.freeRoads = 2; if (!p.bot) G.mode = validEdges(G.cur, "calzada").length ? "calzada" : "canoa"; }
+    if (card.t === "tributo") { choice.forEach(function (r) { p.res[r]++; }); log(p.name + " toma " + choice.map(function (r) { return lc(r, 1); }).join(" y ") + "."); }
+    if (card.t === "chisme") {
+      var n = 0;
+      G.players.forEach(function (o, i) { if (i !== G.cur) { n += o.res[choice]; p.res[choice] += o.res[choice]; o.res[choice] = 0; } });
+      log(p.name + " se lleva " + n + " de " + lc(choice) + ".");
+    }
+    bumpHand = true;
+    afterAction();
+  }
+  function useFish(id, choice) {
+    var p = P(), f = FISH.filter(function (x) { return x.id === id; })[0];
+    p.fish -= f.n;
+    log(p.name + " se echa " + f.n + " corridos: " + f.name.toLowerCase() + ".");
+    if (id === "ahuyentar") { startChupa(G.phase, true); return; }
+    if (id === "robar") { chooseVictim(choice, function () { afterAction(); }); return; }
+    if (id === "recurso") { p.res[choice]++; bumpHand = true; }
+    if (id === "ruta") { G.freeRoads = 1; if (!p.bot) G.mode = validEdges(G.cur, "calzada").length ? "calzada" : "canoa"; }
+    if (id === "codice") { buyCodice(true); return; }
+    afterAction();
+  }
+  function fishOk(f) {
+    var p = P();
+    if (p.fish < f.n || G.phase !== "main" || G.mode) return false;
+    if (f.id === "ruta") return validEdges(G.cur, "calzada").length > 0 || validEdges(G.cur, "canoa").length > 0;
+    if (f.id === "codice") return G.encDeck.length > 0;
+    if (f.id === "robar") return G.players.some(function (o, i) { return i !== G.cur && total(o) > 0; });
+    return true;
+  }
+  function bankTrade(give, get) {
+    var p = P(), r = rate(G.cur, give);
+    if (p.res[give] < r || give === get) return false;
+    p.res[give] -= r; p.res[get]++;
+    log(p.name + " cambia " + r + " " + lc(give) + " por 1 " + lc(get, 1) + ".");
+    bumpHand = true;
+    afterAction();
+    return true;
+  }
+  function afterAction() {
+    updateAwards();
+    dirty = true;
+    var v = vp(G.cur, true);
+    if (G.winner < 0 && v >= G.goal && G.phase !== "setup") { G.winner = G.cur; G.phase = "over"; render(); showWinner(); return; }
+    render();
+  }
+
+  // ---------- Bots ----------
+  function later(fn) { setTimeout(function () { if (G && G.winner < 0) fn(); }, BOT_DELAY); }
+  function vertScore(pi, vi) {
+    var v = G.verts[vi], s = 0, kinds = {}, p = P(pi);
+    v.h.forEach(function (hi) {
+      var h = G.hexes[hi], r = TILE[h.type].res;
+      if (h.fog) { s += 1.6; return; }
+      if (h.island && G.founder < 0) s += 7;
+      if (h.type === "lago") { if (G.opts.pesca) s += pips(h.num) * 0.5; return; }
+      if (!r) return;
+      var w = pips(h.num) * (hi === G.chupa ? 0.4 : 1);
+      if (r === "obsidiana" && p.oficio === "tallador") w *= 1.3;
+      s += w; if (!kinds[r]) { kinds[r] = 1; s += 1.2; }
+    });
+    return s;
+  }
+  function botSetup() {
+    var pi = G.cur;
+    var vs = validVerts(pi, true);
+    vs.sort(function (a, b) { return vertScore(pi, b) - vertScore(pi, a); });
+    var vi = vs[Math.floor(Math.random() * Math.min(2, vs.length))];
+    placeSetupAldea(vi);
+    later(function () { placeSetupRoute(bestRoute(pi, setupEdges(pi, vi).map(function (e) { return { e: e }; })).e); });
+  }
+  function routeCandidates(pi, freeOnly) {
+    var o = [], p = P(pi);
+    ["calzada", "canoa"].forEach(function (k) {
+      if (k === "canoa" && !G.opts.lago) return;
+      if (k === "calzada" ? p.calzadas >= LIMIT.calzada : p.canoas >= LIMIT.canoa) return;
+      if (!freeOnly && !has(p, costOf(pi, k))) return;
+      validEdges(pi, k).forEach(function (e) { o.push({ e: e, k: k }); });
+    });
+    return o;
+  }
+  function bestRoute(pi, cands) {
+    var best = cands[0], bs = -1;
+    cands.forEach(function (c) {
+      var e = G.edges[c.e];
+      var mineA = (G.verts[e.a].b && G.verts[e.a].b.p === pi) || G.verts[e.a].e.some(function (x) { return x !== c.e && G.edges[x].r === pi; });
+      var far = mineA ? e.b : e.a;
+      var s = 0;
+      if (aldeaOk(pi, far, true) || (spotFree(far) && G.verts[far].h.some(function (hi) { return G.hexes[hi].island; }))) s = vertScore(pi, far) + 2;
+      G.verts[far].adj.forEach(function (n) { if (spotFree(n)) s = Math.max(s, vertScore(pi, n) * 0.75); });
+      s += Math.random() * 0.5;
+      if (s > bs) { bs = s; best = c; }
+    });
+    return best;
+  }
+  function botGoal(pi) {
+    var p = P(pi);
+    if (p.ciudades < LIMIT.ciudad && p.aldeas > 0 && (p.res.obsidiana + p.res.maiz >= 3 || p.aldeas + p.ciudades >= 4)) return "ciudad";
+    if (p.aldeas < LIMIT.aldea && validVerts(pi).length) return "aldea";
+    if (p.aldeas < LIMIT.aldea && p.calzadas < LIMIT.calzada) return "calzada";
+    if (p.ciudades < LIMIT.ciudad && p.aldeas > 0) return "ciudad";
+    return "codice";
+  }
+  function botAct() {
+    if (G.winner >= 0 || !P().bot) return;
+    var pi = G.cur, p = P();
+    if (G.phase === "roll") {
+      var aq = p.cards.findIndex(function (c) { return c.t === "aguila" && canPlay(c); });
+      var blocked = G.hexes[G.chupa].v.some(function (v) { return G.verts[v].b && G.verts[v].b.p === pi; });
+      if (aq >= 0 && blocked) { playCard(aq); return; }
+      rollDice(); return;
+    }
+    if (G.phase !== "main") return;
+    if (botStep(pi)) { later(botAct); return; }
+    endTurn();
+  }
+  function minDefense() { return Math.min.apply(null, G.players.map(function (o, i) { return o.ciudades > 0 ? defense(i) : 99; })); }
+  function botStep(pi) {
+    var p = P(pi);
+    for (var i = 0; i < p.cards.length; i++) {
+      var c = p.cards[i];
+      if (!canPlay(c)) continue;
+      if (c.t === "aguila" && (G.hexes[G.chupa].v.some(function (v) { return G.verts[v].b && G.verts[v].b.p === pi; }) || p.army >= 2 || (G.opts.senorios && G.fuego >= 5))) { playCard(i); return true; }
+      if (c.t === "tamemes") { playCard(i); return true; }
+      if (c.t === "tributo") { playCard(i, needList(pi, 2)); return true; }
+      if (c.t === "chisme") {
+        var best = RES[0], bn = -1;
+        RES.forEach(function (r) { var n = 0; G.players.forEach(function (o, j) { if (j !== pi) n += o.res[r]; }); if (n > bn) { bn = n; best = r; } });
+        if (bn >= 3) { playCard(i, best); return true; }
+      }
+    }
+    if (G.freeRoads > 0) { var fc = routeCandidates(pi, true); if (fc.length) { var fr = bestRoute(pi, fc); buildRoute(fr.e, fr.k); return true; } G.freeRoads = 0; }
+    if (G.opts.pesca) {
+      if (p.fish >= 7 && G.encDeck.length) { useFish("codice"); return true; }
+      if (p.fish >= 4) { useFish("recurso", needList(pi, 1)[0]); return true; }
+      if (p.fish >= 2 && G.hexes[G.chupa].v.some(function (v) { return G.verts[v].b && G.verts[v].b.p === pi; })) { useFish("ahuyentar"); return true; }
+    }
+    if (canBuild("ciudad")) { var rs = ownAldeas(pi).sort(function (a, b) { return vertScore(pi, b) - vertScore(pi, a); }); buildCiudad(rs[0]); return true; }
+    if (canBuild("aldea")) { var vs = validVerts(pi).sort(function (a, b) { return vertScore(pi, b) - vertScore(pi, a); }); buildAldea(vs[0]); return true; }
+    if (G.opts.senorios) {
+      for (var j = 0; j < IMP_IDS.length; j++) if (canImprove(pi, IMP_IDS[j])) { improve(IMP_IDS[j]); return true; }
+      if (canBuild("jaguar") && G.fuego >= 3 && p.ciudades > 0 && defense(pi) <= minDefense() && defense(pi) < 5) { buyJaguar(); return true; }
+    }
+    var goal = botGoal(pi);
+    var rc = routeCandidates(pi, false);
+    if (rc.length && (goal === "calzada" || (validVerts(pi).length === 0 && p.aldeas < LIMIT.aldea) || (p.res.madera >= 3 && p.res.barro >= 3) || (G.opts.lago && G.founder < 0 && p.canoas < 2))) {
+      if (p.calzadas + p.canoas < 13 || validVerts(pi).length === 0) { var br = bestRoute(pi, rc); buildRoute(br.e, br.k); return true; }
+    }
+    if (canBuild("codice") && (goal === "codice" || total(p) >= 7 || (goal === "aldea" && !has(p, COST.aldea) && p.res.obsidiana >= 2))) { buyCodice(); return true; }
+    if (G.botTrades < 3 && botTrade(pi, goal)) { G.botTrades++; return true; }
+    return false;
+  }
+  function needList(pi, n) {
+    var p = P(pi), goal = botGoal(pi), cost = costOf(pi, goal), out = [];
+    RES.forEach(function (r) { var need = (cost[r] || 0) - p.res[r]; for (var i = 0; i < need && out.length < n; i++) out.push(r); });
+    while (out.length < n) out.push(pick(RES));
+    return out;
+  }
+  function botTrade(pi, goal) {
+    var p = P(pi), cost = costOf(pi, goal);
+    var need = RES.filter(function (x) { return (cost[x] || 0) > p.res[x]; });
+    if (!need.length) return false;
+    var missing = 0; need.forEach(function (x) { missing += cost[x] - p.res[x]; });
+    if (missing > 2) return false;
+    var spare = ALLK().filter(function (x) { return p.res[x] - (cost[x] || 0) >= rate(pi, x) && !(COM.indexOf(x) >= 0 && p.imp[IMP_IDS[COM.indexOf(x)]] < 4 && p.ciudades > 0); }).sort(function (a, b) { return p.res[b] - p.res[a]; });
+    if (!spare.length) return false;
+    return bankTrade(spare[0], need[0]);
+  }
+  function botDiscard(pi, n) {
+    var p = P(pi);
+    for (var i = 0; i < n; i++) { var r = RES.concat(COM).sort(function (a, b) { return p.res[b] - p.res[a]; })[0]; p.res[r]--; }
+    log(p.name + " tira " + n + " cartas.");
+  }
+  function botMoveChupa() {
+    var pi = G.cur, best = -1, bs = -1e9;
+    chupaTargets().forEach(function (hi) {
+      var h = G.hexes[hi], s = 0, mine = false;
+      h.v.forEach(function (vi) {
+        var b = G.verts[vi].b; if (!b) return;
+        if (b.p === pi) mine = true;
+        else if (P(b.p).oficio !== "ticitl") s += b.lvl * (pips(h.num) + 1) * (1 + vp(b.p) * 0.15);
+      });
+      if (mine) s -= 20;
+      s += Math.random();
+      if (s > bs) { bs = s; best = hi; }
+    });
+    placeChupa(best);
+  }
+  function botAccepts(bi, give, get) {
+    var b = P(bi), gi = 0, ge = 0;
+    for (var r in get) { if (b.res[r] < get[r]) return false; ge += get[r]; }
+    for (r in give) gi += give[r];
+    if (gi < ge || !gi) return false;
+    var cost = costOf(bi, botGoal(bi));
+    for (r in get) if (get[r] && (cost[r] || 0) > b.res[r] - get[r]) return gi > ge;
+    return true;
+  }
+
+  // ---------- Rendering: board ----------
+  var cv = $("board"), ctx = cv.getContext("2d"), dpr = 1, S = 40, OX = 0, OY = 0, CW = 0, CH = 0;
+  var dirty = true, bumpHand = false, cache = document.createElement("canvas"), hover = null;
+  function resize() {
+    var wrap = $("boardWrap");
+    var w = wrap.clientWidth - 6;
+    var R = G ? G.R : 2, WU = (2 * R + 1) * SQ3 + 1.2, HU = 3 * R + 3.3;
+    var maxH = Math.max(320, window.innerHeight - 110);
+    var cw = Math.min(w, maxH * WU / HU), ch = cw * HU / WU;
+    dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    cv.style.width = cw + "px"; cv.style.height = ch + "px";
+    CW = cw; CH = ch;
+    S = Math.min(cw / WU, ch / HU);
+    OX = cw / 2; OY = ch / 2 + (G && G.opts.senorios ? S * 0.15 : 0);
+    cache.width = cv.width; cache.height = cv.height;
+    dirty = true;
+  }
+  window.addEventListener("resize", function () { if (G) resize(); });
+  function X(x) { return OX + x * S; }
+  function Y(y) { return OY + y * S; }
+
+  function drawStatic() {
+    var c = cache.getContext("2d");
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, CW, CH);
+    c.save(); c.translate(OX, OY); c.rotate(PI / 6); hexPath(c, 0, 0, S * ((G.R + 0.5) * SQ3 + 0.62)); c.fillStyle = "#3a2c26"; c.fill(); c.lineWidth = 4; c.strokeStyle = "#5a4436"; c.stroke(); c.restore();
+    c.fillStyle = "rgba(255,229,0,.07)";
+    for (var i = 0; i < 70; i++) { var a = i * 2.4, rr = S * (1 + (i * 37 % 100) / 100 * (G.R * 1.5 + 0.6)); c.beginPath(); c.arc(OX + Math.cos(a) * rr, OY + Math.sin(a) * rr, 1.5, 0, PI * 2); c.fill(); }
+    G.hexes.forEach(function (h) { if (h.fog) drawFog(c, X(h.x), Y(h.y), S); else drawTile(c, h.type, X(h.x), Y(h.y), S, false, G.opts.pesca); });
+    G.hexes.forEach(function (h, hi) {
+      if (h.island) drawCapitalMark(c, X(h.x) - S * 0.48, Y(h.y) + S * 0.55, S, G.founder >= 0 ? P(G.founder).color : null);
+      if (hi === G.dust) {
+        hexPath(c, X(h.x), Y(h.y), S * 0.97); c.fillStyle = "rgba(20,14,40,.7)"; c.fill();
+        c.fillStyle = "#15110d"; c.beginPath(); c.arc(X(h.x), Y(h.y) - S * 0.35, S * 0.22, 0, PI * 2); c.fill();
+        c.strokeStyle = "#ffe500"; c.lineWidth = S * 0.04; c.stroke();
+      }
+    });
+    G.edges.forEach(function (e) {
+      if (e.r === null) return;
+      var a = G.verts[e.a], b = G.verts[e.b];
+      if (e.kind === "canoa") drawVia(c, X(a.x), Y(a.y), X(b.x), Y(b.y), S, P(e.r).color);
+      else drawCalzada(c, X(a.x), Y(a.y), X(b.x), Y(b.y), S, P(e.r).color);
+    });
+    G.verts.forEach(function (v) { if (v.b) { if (v.b.lvl === 1) drawRancho(c, X(v.x), Y(v.y), S * 0.44, P(v.b.p).color); else drawPueblo(c, X(v.x), Y(v.y), S * 0.5, P(v.b.p).color); } });
+  }
+  function drawFederalTrack(c, t) {
+    var x0 = S * 0.55, y0 = S * 0.45, step = S * 0.38;
+    c.font = "900 " + Math.round(Math.max(10, S * 0.2)) + "px Chivo, Arial, sans-serif"; c.textAlign = "left"; c.textBaseline = "middle";
+    c.fillStyle = "#ffe500"; c.fillText("FEDERALES " + G.fuego + "/" + FUEGO_MAX, x0 - S * 0.15, y0 - S * 0.2);
+    for (var i = 0; i <= FUEGO_MAX; i++) {
+      var x = x0 + i * step, y = y0 + S * 0.3;
+      c.fillStyle = i === FUEGO_MAX ? "#ff2e88" : i < G.fuego ? "#ffe500" : "rgba(255,249,227,.25)";
+      c.beginPath(); c.arc(x, y, S * (i === FUEGO_MAX ? 0.11 : 0.07), 0, PI * 2); c.fill();
+    }
+    LW = Math.max(1, S * 0.03);
+    drawFederal(c, x0 + G.fuego * step, y0 + S * 0.3, S * 0.6, t);
+  }
+
+  function targets() {
+    if (!G || !isHumanTurn()) return null;
+    var pi = G.cur;
+    switch (G.mode) {
+      case "setupAldea": return { k: "v", ids: validVerts(pi, true) };
+      case "setupRuta": return { k: "e", ids: setupEdges(pi, G.setupV) };
+      case "calzada": return { k: "e", ids: validEdges(pi, "calzada") };
+      case "canoa": return { k: "e", ids: validEdges(pi, "canoa") };
+      case "aldea": return { k: "v", ids: validVerts(pi, false) };
+      case "ciudad": return { k: "v", ids: ownAldeas(pi) };
+      case "chupa": return { k: "h", ids: chupaTargets() };
+    }
+    return null;
+  }
+  function tpos(t, id) {
+    if (t.k === "v") return G.verts[id];
+    if (t.k === "h") return G.hexes[id];
+    var e = G.edges[id], a = G.verts[e.a], b = G.verts[e.b];
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
+  function frame(t) {
+    requestAnimationFrame(frame);
+    if (!G || $("game").classList.contains("hidden")) return;
+    if (dirty) { drawStatic(); dirty = false; }
+    var c = ctx;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, cv.width, cv.height);
+    c.drawImage(cache, 0, 0);
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawAmbient(c, t);
+    var fl = G.flash && t < G.flash.until ? G.flash.list : [];
+    G.hexes.forEach(function (h, hi) {
+      if (!h.num || h.fog) return;
+      var f = fl.indexOf(hi) >= 0 && Math.floor(t / 250) % 2 === 0;
+      var hot = G.dice && G.dice[0] + G.dice[1] === h.num && G.phase === "main";
+      if (hot) { c.save(); c.shadowColor = "#ffe500"; c.shadowBlur = S * 0.4; }
+      drawToken(c, h.num, X(h.x), Y(h.y) + S * 0.28, S, f, h.type === "lago");
+      if (hot) c.restore();
+    });
+    if (G.opts.senorios) drawFederalTrack(c, t);
+    var cp = caciquePos(t);
+    drawCacique(c, cp.x, cp.y, S * 0.62, t, !!WALK);
+    drawFx(c, t);
+    var tg = targets();
+    if (tg) {
+      var pulse = 0.5 + 0.5 * Math.sin(t / 180);
+      tg.ids.forEach(function (id) {
+        var p = tpos(tg, id), x = X(p.x), y = Y(p.y), on = hover && hover.k === tg.k && hover.id === id;
+        c.lineWidth = 3; c.strokeStyle = INK;
+        if (tg.k === "h") {
+          hexPath(c, x, y, S * (0.8 + pulse * 0.06)); c.lineWidth = on ? 7 : 4; c.strokeStyle = on ? "#ff2e88" : "rgba(255,229,0," + (0.5 + pulse * 0.5) + ")"; c.stroke();
+        } else {
+          var r = S * (tg.k === "v" ? 0.16 : 0.12) * (on ? 1.35 : 1 + pulse * 0.15);
+          c.fillStyle = on ? "#ff2e88" : "rgba(255,229,0,.92)";
+          c.beginPath(); c.arc(x, y, r, 0, PI * 2); c.fill(); c.stroke();
+        }
+      });
+    }
+  }
+  requestAnimationFrame(frame);
+
+  function pickTarget(ev) {
+    var tg = targets(); if (!tg) return null;
+    var rect = cv.getBoundingClientRect();
+    var ux = (ev.clientX - rect.left - OX) / S, uy = (ev.clientY - rect.top - OY) / S;
+    var best = null, bd = tg.k === "h" ? 0.85 : tg.k === "v" ? 0.42 : 0.36;
+    tg.ids.forEach(function (id) { var p = tpos(tg, id), d = Math.hypot(p.x - ux, p.y - uy); if (d < bd) { bd = d; best = id; } });
+    return best === null ? null : { k: tg.k, id: best };
+  }
+  cv.addEventListener("pointermove", function (ev) { hover = pickTarget(ev); cv.style.cursor = hover ? "pointer" : "default"; });
+  cv.addEventListener("pointerleave", function () { hover = null; });
+  cv.addEventListener("click", function (ev) {
+    var t = pickTarget(ev); if (!t) return;
+    hover = null;
+    switch (G.mode) {
+      case "setupAldea": placeSetupAldea(t.id); break;
+      case "setupRuta": placeSetupRoute(t.id); break;
+      case "calzada": buildRoute(t.id, "calzada"); break;
+      case "canoa": buildRoute(t.id, "canoa"); break;
+      case "aldea": buildAldea(t.id); break;
+      case "ciudad": buildCiudad(t.id); break;
+      case "chupa": placeChupa(t.id); break;
+    }
+  });
+
+  // ---------- Rendering: side panel ----------
+  var PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+  function drawDie(el, n) { var h = ""; for (var i = 0; i < 9; i++) h += '<i class="' + (n && PIPS[n].indexOf(i) >= 0 ? "on" : "") + '"></i>'; el.innerHTML = h; }
+  function animateDice() { [0, 1].forEach(function (i) { var d = $("die" + i); d.classList.remove("roll"); void d.offsetWidth; d.classList.add("roll"); }); }
+  function costHtml(cost) {
+    var h = ""; RES.forEach(function (r) { for (var i = 0; i < (cost[r] || 0); i++) h += icon(r); });
+    return h || "<em>Gratis</em>";
+  }
+  function viewer() {
+    if (!P().bot) return G.cur;
+    if (G.lastViewer >= 0) return G.lastViewer;
+    return G.players.findIndex(function (p) { return !p.bot; });
+  }
+  function hintText() {
+    var p = P();
+    if (G.winner >= 0) return P(G.winner).name + " ganó.";
+    if (p.bot) return p.name + " está pensando…";
+    switch (G.mode) {
+      case "setupAldea": return "Toca una esquina para poner tu rancho.";
+      case "setupRuta": return "Ahora toca una orilla junto a tu rancho para tu camino.";
+      case "calzada": return G.freeRoads > 0 ? "Toca dónde va tu camino gratis (" + G.freeRoads + " más). También puedes cambiar a vía." : "Toca una orilla de tierra para tu camino.";
+      case "canoa": return G.freeRoads > 0 ? "Toca dónde va tu vía gratis (" + G.freeRoads + " más)." : "Toca una orilla del desierto para tu vía.";
+      case "aldea": return "Toca una esquina para tu rancho.";
+      case "ciudad": return "Toca uno de tus ranchos para hacerlo pueblo.";
+      case "chupa": return "Toca un terreno para mandar ahí al Cacique.";
+    }
+    if (G.phase === "roll") return "Tira los dados.";
+    if (G.phase === "main") return "Construye, cambia o pasa el turno.";
+    return "Espérate tantito…";
+  }
+  function render() {
+    if (!G) return;
+    var p = P();
+    var tsrc = avatar(p.oficio, p.color), td = $("turnDot");
+    if (td.getAttribute("src") !== tsrc) { td.src = tsrc; td.classList.remove("hop"); void td.offsetWidth; td.classList.add("hop"); }
+    $("turnName").textContent = p.name + (p.bot ? " (máquina)" : "");
+    $("turnOficio").textContent = OFICIOS[p.oficio].name + ": " + OFICIOS[p.oficio].desc;
+    drawDie($("die0"), G.dice && G.dice[0]); drawDie($("die1"), G.dice && G.dice[1]);
+    $("hint").textContent = hintText();
+    $("fuegoLine").classList.toggle("hidden", !G.opts.senorios);
+    if (G.opts.senorios) { var at = 0, df = 0; G.players.forEach(function (o, i) { at += o.ciudades; df += defense(i); }); $("fuegoLine").textContent = "Los federales llegan en " + (FUEGO_MAX - G.fuego) + " días. Defensores " + df + " contra " + at + " pueblos."; }
+    $("goalLine").textContent = "Gana quien llegue a " + G.goal + " puntos.";
+    if (G.event) { $("evTag").textContent = "Noticia de la ronda " + G.round; $("evName").textContent = G.event.name; $("evText").textContent = G.event.text; }
+    else { $("evTag").textContent = "Antes de empezar"; $("evName").textContent = "Repartiendo la tierra"; $("evText").textContent = "Cada quien pone 2 ranchos con su camino. En la segunda vuelta recibes lo que da la tierra junto a tu rancho."; }
+
+    var vi = viewer();
+    if (vi >= 0) {
+      var v = P(vi), keys = ALLK().slice();
+      if (G.opts.pesca) keys.push("pescado");
+      $("handBox").classList.remove("hidden");
+      $("handTitle").textContent = vi === G.cur ? "Tu mano" : "Mano de " + v.name;
+      $("hand").className = "hand" + (keys.length > 5 ? " wide" : "");
+      $("hand").innerHTML = keys.map(function (r) { var n = r === "pescado" ? v.fish : v.res[r]; return '<div class="res' + (n ? "" : " zero") + (bumpHand && n ? " bump" : "") + '">' + icon(r) + "<b>" + n + "</b><small>" + NAME[r] + "</small></div>"; }).join("");
+      $("cards").innerHTML = v.cards.map(function (c, i) {
+        var can = vi === G.cur && isHumanTurn() && canPlay(c) && !G.mode;
+        return '<div class="card"><div class="ct"><b>' + ENC[c.t].name + "</b><span>" + ENC[c.t].desc + "</span></div>" + (c.t === "templo" ? "" : '<button class="btn" data-card="' + i + '"' + (can ? "" : " disabled") + ">Jugar</button>") + "</div>";
+      }).join("");
+      $("cards").querySelectorAll("[data-card]").forEach(function (b) { b.onclick = function () { onPlayCard(+b.dataset.card); }; });
+    } else $("handBox").classList.add("hidden");
+    bumpHand = false;
+
+    var my = isHumanTurn(), main = my && G.phase === "main";
+    var A = [["roll", "Tirar dados", "", my && G.phase === "roll" && !G.mode, true]];
+    A.push(["calzada", "Camino", costHtml(costOf(G.cur, "calzada")), my && canBuild("calzada")]);
+    if (G.opts.lago) A.push(["canoa", "Vía de tren", costHtml(costOf(G.cur, "canoa")), my && canBuild("canoa")]);
+    A.push(["aldea", "Rancho", costHtml(costOf(G.cur, "aldea")), my && canBuild("aldea")]);
+    A.push(["ciudad", "Pueblo", costHtml(costOf(G.cur, "ciudad")), my && canBuild("ciudad")]);
+    A.push(["codice", "Plan", costHtml(costOf(G.cur, "codice")), my && canBuild("codice") && !G.mode]);
+    if (G.opts.senorios) {
+      A.push(["jaguar", "Dorado", costHtml(costOf(G.cur, "jaguar")), my && canBuild("jaguar") && !G.mode]);
+      A.push(["mejoras", "Mejoras del pueblo", "<em>Con periódicos, sarapes y pesos</em>", main && !G.mode]);
+    }
+    if (G.opts.pesca) A.push(["pesca", "Corridos", "<em>Tienes " + p.fish + "</em>", main && !G.mode && FISH.some(fishOk)]);
+    A.push(["trade", "Comerciar", "<em>Banco " + rate(G.cur) + " por 1 o con los demás</em>", main && !G.mode]);
+    A.push(["end", "Pasar turno", "", main && G.freeRoads === 0 && (!G.mode || ["calzada", "canoa", "aldea", "ciudad"].indexOf(G.mode) >= 0), true]);
+    if (G.phase === "roll" || G.phase === "setup") A.pop(); else A.shift();
+    $("actions").innerHTML = A.map(function (a) {
+      var pressed = G.mode === a[0];
+      return '<button class="act' + (a[4] ? " big" : "") + '" data-act="' + a[0] + '"' + (a[3] || pressed ? "" : " disabled") + ' aria-pressed="' + pressed + '"><b>' + (pressed ? (G.freeRoads > 0 ? a[1] : "Cancelar") : a[1]) + "</b>" + (a[2] ? '<span class="cost">' + a[2] + "</span>" : "") + "</button>";
+    }).join("");
+    $("actions").querySelectorAll("[data-act]").forEach(function (b) { b.onclick = function () { onAction(b.dataset.act); }; });
+
+    $("plist").innerHTML = G.players.map(function (o, i) {
+      var badges = (G.roadHolder === i ? '<span class="badge">Camino Real</span>' : "") + (G.armyHolder === i ? '<span class="badge">División del Norte</span>' : "") + (G.founder === i ? '<span class="badge">La Capital</span>' : "") + (G.ajolote === i ? '<span class="badge">Gallo Giro</span>' : "") + IMP_IDS.map(function (k) { return G.senor[k] === i ? '<span class="badge">Mejor ' + IMP[k].name + "</span>" : ""; }).join("") + (o.heroes ? '<span class="badge">Héroe ×' + o.heroes + "</span>" : "");
+      var extra = (G.opts.senorios ? " · dorados " + o.jaguars + " · mejoras " + o.imp.saber + "/" + o.imp.tianguis + "/" + o.imp.guerra : "") + (G.opts.pesca ? " · corridos " + o.fish : "");
+      return '<div class="pl' + (i === G.cur ? " cur" : "") + '">' + avaImg(o) + '<div><div class="nm">' + esc(o.name) + (o.bot ? " · máquina" : "") + '</div><div class="sub">' + OFICIOS[o.oficio].name + " · " + total(o) + " cartas · " + o.cards.length + " planes · camino " + o.road + " · guerrilleros " + o.army + extra + "</div><div>" + badges + '</div></div><div class="vp">' + vp(i, i === vi) + "<small>puntos</small></div></div>";
+    }).join("");
+  }
+
+  function onAction(a) {
+    if (!isHumanTurn()) return;
+    if (a === "roll") return rollDice();
+    if (a === "end") { G.mode = null; return endTurn(); }
+    if (a === "trade") return tradeModal();
+    if (a === "codice") return buyCodice();
+    if (a === "jaguar") return buyJaguar();
+    if (a === "mejoras") return impModal();
+    if (a === "pesca") return fishModal();
+    if (G.mode === a) { if (G.freeRoads > 0) return; G.mode = null; return render(); }
+    G.mode = a; render();
+  }
+  function onPlayCard(i) {
+    var c = P().cards[i];
+    if (c.t === "tributo") return pickResModal("Botín", "Elige 2 recursos.", 2, function (ch) { playCard(i, ch); });
+    if (c.t === "chisme") return pickResModal("Requisición", "¿Qué recurso te llevas de todos?", 1, function (ch) { playCard(i, ch[0]); });
+    playCard(i);
+  }
+
+  // ---------- Modals ----------
+  function openModal(html) { $("sheet").innerHTML = html; $("modal").classList.remove("hidden"); }
+  function closeModal() { $("modal").classList.add("hidden"); $("sheet").innerHTML = ""; }
+  function withCover(pi, cb) {
+    if (humans() > 1 && G.lastViewer !== pi) {
+      $("coverName").textContent = P(pi).name;
+      $("coverAva").src = avatar(P(pi).oficio, P(pi).color);
+      $("cover").classList.remove("hidden");
+      $("handBox").classList.add("hidden");
+      $("coverBtn").onclick = function () { $("cover").classList.add("hidden"); G.lastViewer = pi; cb(); render(); };
+    } else { if (!P(pi).bot) G.lastViewer = pi; cb(); }
+  }
+  function pickResModal(title, text, n, done) {
+    var sel = [];
+    function draw() {
+      openModal("<h2>" + title + "</h2><p>" + text + '</p><div class="picks">' + RES.map(function (r) {
+        var k = sel.filter(function (x) { return x === r; }).length;
+        return '<button class="pickres" data-r="' + r + '" aria-pressed="' + (k > 0) + '">' + icon(r) + NAME[r] + (k > 1 ? " ×" + k : "") + "</button>";
+      }).join("") + '</div><div class="row"><button class="btn alt" id="mCancel">Cancelar</button><button class="btn" id="mOk"' + (sel.length === n ? "" : " disabled") + ">Listo</button></div>");
+      $("sheet").querySelectorAll("[data-r]").forEach(function (b) { b.onclick = function () { if (sel.length >= n) sel.shift(); sel.push(b.dataset.r); draw(); }; });
+      $("mCancel").onclick = closeModal;
+      $("mOk").onclick = function () { closeModal(); done(sel); };
+    }
+    draw();
+  }
+  function discardModal(pi, n, done) {
+    var p = P(pi), d = {}, keys = RES.concat(COM).filter(function (r) { return p.res[r] > 0 || RES.indexOf(r) >= 0; });
+    keys.forEach(function (r) { d[r] = 0; });
+    function cnt() { var t = 0; keys.forEach(function (r) { t += d[r]; }); return t; }
+    function draw() {
+      openModal("<h2>¡El Cacique!</h2><p><b>" + esc(p.name) + "</b>, tienes " + total(p) + " cartas. Tira " + n + '.</p><div class="steppers">' + keys.map(function (r) {
+        return '<div class="step">' + icon(r) + "<span>" + NAME[r] + ' <span class="have">tienes ' + p.res[r] + '</span></span><button data-m="' + r + '"' + (d[r] ? "" : " disabled") + ">−</button><output>" + d[r] + '</output><button data-p="' + r + '"' + (d[r] < p.res[r] && cnt() < n ? "" : " disabled") + ">+</button></div>";
+      }).join("") + '</div><button class="btn wide" id="mOk"' + (cnt() === n ? "" : " disabled") + ">Tirar " + cnt() + " de " + n + "</button>");
+      $("sheet").querySelectorAll("[data-m]").forEach(function (b) { b.onclick = function () { d[b.dataset.m]--; draw(); }; });
+      $("sheet").querySelectorAll("[data-p]").forEach(function (b) { b.onclick = function () { d[b.dataset.p]++; draw(); }; });
+      $("mOk").onclick = function () { keys.forEach(function (r) { p.res[r] -= d[r]; }); log(p.name + " tira " + n + " cartas."); closeModal(); render(); done(); };
+    }
+    draw();
+  }
+  function impModal() {
+    function draw() {
+      var p = P();
+      openModal("<h2>Mejoras del pueblo</h2><p class=\"muted\">Cada nivel cuesta tantas cartas como el nivel. Necesitas al menos un pueblo. El primero en llegar a nivel 4 gana 2 puntos.</p>" + IMP_IDS.map(function (k) {
+        var I = IMP[k], lv = p.imp[k], nx = lv + 1, bars = "";
+        for (var i = 1; i <= 4; i++) bars += '<i class="' + (i <= lv ? "on" : "") + '"></i>';
+        var ben = I.lv.map(function (t, i) { return t ? "<small>Nivel " + (i + 1) + ": " + t + "</small>" : ""; }).join("");
+        var owner = G.senor[k] >= 0 ? "<small><b>Lo tiene " + esc(P(G.senor[k]).name) + "</b></small>" : "";
+        return '<div class="imp"><div><b>' + I.name + '</b><div class="lv">' + bars + "</div>" + ben + owner + "</div>" + (lv < 4 ? '<button class="btn" data-imp="' + k + '"' + (canImprove(G.cur, k) ? "" : " disabled") + ">Nivel " + nx + "<br>" + nx + " " + icon(I.com, "ico") + "</button>" : "<b>Listo</b>") + "</div>";
+      }).join("") + '<button class="btn alt wide" id="mClose">Listo</button>');
+      $("sheet").querySelectorAll("[data-imp]").forEach(function (b) { b.onclick = function () { improve(b.dataset.imp); draw(); }; });
+      $("mClose").onclick = function () { closeModal(); render(); };
+    }
+    draw();
+  }
+  function fishModal() {
+    var p = P();
+    openModal("<h2>Corridos</h2><p>Tienes <b>" + p.fish + "</b> corridos. ¿Qué favor pides?</p><div class=\"answers\">" + FISH.map(function (f) {
+      return '<div class="answer"><span><b>' + f.name + "</b> · " + f.n + " corridos<br><small>" + f.desc + '</small></span><button class="btn" data-f="' + f.id + '"' + (fishOk(f) ? "" : " disabled") + ">Usar</button></div>";
+    }).join("") + '</div><button class="btn alt wide" id="mClose">Cerrar</button>');
+    $("mClose").onclick = closeModal;
+    $("sheet").querySelectorAll("[data-f]").forEach(function (b) {
+      b.onclick = function () {
+        var id = b.dataset.f;
+        closeModal();
+        if (id === "recurso") return pickResModal("Te pagan por cantar", "¿Qué recurso quieres?", 1, function (ch) { useFish("recurso", ch[0]); });
+        if (id === "robar") return useFish("robar", G.players.map(function (o, i) { return i; }).filter(function (i) { return i !== G.cur && total(P(i)) > 0; }));
+        useFish(id);
+      };
+    });
+  }
+  function tradeModal() {
+    var p = P(), give = {}, get = {}, bGive = null, bGet = null, offer = null;
+    RES.forEach(function (r) { give[r] = 0; get[r] = 0; });
+    function sum(o) { var t = 0; RES.forEach(function (r) { t += o[r]; }); return t; }
+    function draw() {
+      var keys = ALLK();
+      var h = "<h2>Comerciar</h2><h3>Con el banco</h3><p class=\"muted\">Das</p><div class=\"picks" + (keys.length > 5 ? " wide" : "") + "\">" + keys.map(function (r) {
+        var r8 = rate(G.cur, r);
+        return '<button class="pickres" data-bg="' + r + '" aria-pressed="' + (bGive === r) + '"' + (p.res[r] >= r8 ? "" : " disabled") + ">" + icon(r) + "<em>" + r8 + " por 1 · tienes " + p.res[r] + "</em></button>";
+      }).join("") + '</div><p class="muted">Recibes</p><div class="picks">' + RES.map(function (r) {
+        return '<button class="pickres" data-bt="' + r + '" aria-pressed="' + (bGet === r) + '"' + (r === bGive ? " disabled" : "") + ">" + icon(r) + NAME[r] + "</button>";
+      }).join("") + '</div><button class="btn wide" id="bankGo"' + (bGive && bGet && bGive !== bGet ? "" : " disabled") + ">Cambiar" + (bGive ? " " + rate(G.cur, bGive) + " por 1" : "") + "</button>";
+      h += '<h3>Con los demás</h3><div class="steppers">' + RES.map(function (r) {
+        return '<div class="step">' + icon(r) + '<span>Das <span class="have">tienes ' + p.res[r] + '</span></span><button data-gm="' + r + '"' + (give[r] ? "" : " disabled") + ">−</button><output>" + give[r] + '</output><button data-gp="' + r + '"' + (give[r] < p.res[r] ? "" : " disabled") + ">+</button></div>";
+      }).join("") + "</div><div class=\"steppers\">" + RES.map(function (r) {
+        return '<div class="step">' + icon(r) + "<span>Pides</span><button data-tm=\"" + r + '"' + (get[r] ? "" : " disabled") + ">−</button><output>" + get[r] + '</output><button data-tp="' + r + '">+</button></div>';
+      }).join("") + '</div><button class="btn wide" id="offerGo"' + (sum(give) && sum(get) ? "" : " disabled") + ">Ofrecer</button>";
+      if (offer) {
+        h += '<div class="answers">' + offer.map(function (o) {
+          var q = P(o.i);
+          var right = o.ok === true ? '<button class="btn" data-acc="' + o.i + '">Cerrar trato</button>' : o.ok === false ? "<b>No le entra</b>" : '<button class="btn alt" data-yes="' + o.i + '">Acepto</button>';
+          return '<div class="answer"><span class="dot" style="color:' + INK + ";background:" + q.color + '"></span><span>' + esc(q.name) + "</span>" + right + "</div>";
+        }).join("") + "</div>";
+      }
+      h += '<button class="btn alt wide" id="mClose">Listo</button>';
+      openModal(h);
+      var S$ = $("sheet");
+      S$.querySelectorAll("[data-bg]").forEach(function (b) { b.onclick = function () { bGive = b.dataset.bg; if (bGet === bGive) bGet = null; draw(); }; });
+      S$.querySelectorAll("[data-bt]").forEach(function (b) { b.onclick = function () { bGet = b.dataset.bt; draw(); }; });
+      $("bankGo").onclick = function () { bankTrade(bGive, bGet); if (p.res[bGive] < rate(G.cur, bGive)) bGive = null; offer = null; draw(); };
+      function ch(sel, obj, d) { S$.querySelectorAll("[" + sel + "]").forEach(function (b) { b.onclick = function () { obj[b.getAttribute(sel)] += d; offer = null; draw(); }; }); }
+      ch("data-gm", give, -1); ch("data-gp", give, 1); ch("data-tm", get, -1); ch("data-tp", get, 1);
+      $("offerGo").onclick = function () {
+        offer = G.players.map(function (q, i) { return i; }).filter(function (i) { return i !== G.cur; }).map(function (i) {
+          var q = P(i), can = RES.every(function (r) { return q.res[r] >= get[r]; });
+          return { i: i, ok: !can ? false : q.bot ? botAccepts(i, give, get) : null };
+        });
+        draw();
+      };
+      S$.querySelectorAll("[data-yes]").forEach(function (b) { b.onclick = function () { offer.forEach(function (o) { if (o.i === +b.dataset.yes) o.ok = true; }); draw(); }; });
+      S$.querySelectorAll("[data-acc]").forEach(function (b) {
+        b.onclick = function () {
+          var q = P(+b.dataset.acc);
+          RES.forEach(function (r) { p.res[r] -= give[r]; q.res[r] += give[r]; q.res[r] -= get[r]; p.res[r] += get[r]; give[r] = 0; get[r] = 0; });
+          log(p.name + " hace trato con " + q.name + ".");
+          offer = null; bumpHand = true; afterAction(); draw();
+        };
+      });
+      $("mClose").onclick = function () { closeModal(); render(); };
+    }
+    draw();
+  }
+  function showWinner() {
+    var rows = G.players.map(function (p, i) { return { p: p, v: vp(i, true) }; }).sort(function (a, b) { return b.v - a.v; });
+    log(P(G.winner).name + " se quedó con la región.", true);
+    openModal(avaImg(P(G.winner), "huge hop") + '<span class="stamp">¡' + esc(P(G.winner).name) + ' ganó!</span><p>Se quedó con la región en ' + G.round + ' rondas.</p><table class="scores">' + rows.map(function (r) {
+      return "<tr><td>" + esc(r.p.name) + " · " + r.p.aldeas + " ranchos, " + r.p.ciudades + " pueblos</td><td>" + r.v + "</td></tr>";
+    }).join("") + '</table><div class="row"><button class="btn alt" id="mSee">Ver tablero</button><button class="btn" id="mAgain">Otra vez</button></div>');
+    $("mSee").onclick = closeModal;
+    $("mAgain").onclick = function () { closeModal(); newGame(lastCfg, lastOpts); };
+  }
+
+  // ---------- Setup screen ----------
+  var count = 2, rows = [], lastCfg = null, lastOpts = null, exp = { lago: true, pesca: false, senorios: false };
+  for (var i = 0; i < 6; i++) rows.push({ name: DEFAULT_NAMES[i], bot: i > 0, oficio: "azar" });
+  var EXP = [
+    ["lago", "El Tren", "Un desierto en medio que solo se cruza por vía, con la Capital en el centro. Quien llegue primero gana 2 puntos. La orilla empieza tapada. Hace falta para 5 o 6 jugadores, y la meta sube 2."],
+    ["pesca", "Los Corridos", "El desierto da corridos, y los corridos se cambian por favores. El Gallo Giro vale 1 punto. Se juega con El Tren."],
+    ["senorios", "Generales y Dorados", "Los pueblos dan periódicos, sarapes y pesos para subir de nivel. Los Dorados defienden cuando llegan los federales. La meta sube 3."]
+  ];
+  function drawSetup() {
+    if (count > 4) exp.lago = true;
+    if (exp.pesca) exp.lago = true;
+    $("countBtns").innerHTML = [2, 3, 4, 5, 6].map(function (n) { return '<button class="toggle" data-n="' + n + '" aria-pressed="' + (n === count) + '">' + n + "</button>"; }).join("");
+    $("countBtns").querySelectorAll("[data-n]").forEach(function (b) { b.onclick = function () { count = +b.dataset.n; drawSetup(); }; });
+    $("expBtns").innerHTML = EXP.map(function (e) {
+      var locked = e[0] === "lago" && (count > 4 || exp.pesca);
+      return '<button class="exp" data-exp="' + e[0] + '" aria-pressed="' + exp[e[0]] + '"' + (locked ? " disabled" : "") + "><b>" + (exp[e[0]] ? "✓ " : "") + e[1] + "</b><span>" + e[2] + "</span></button>";
+    }).join("") + '<p class="muted">Meta: ' + (10 + (exp.lago ? 2 : 0) + (exp.senorios ? 3 : 0)) + " puntos.</p>";
+    $("expBtns").querySelectorAll("[data-exp]").forEach(function (b) { b.onclick = function () { exp[b.dataset.exp] = !exp[b.dataset.exp]; drawSetup(); }; });
+    var opts = '<option value="azar">Oficio al azar</option>' + OFICIO_IDS.map(function (o) { return '<option value="' + o + '">' + OFICIOS[o].name + ": " + OFICIOS[o].desc + "</option>"; }).join("");
+    $("playerRows").innerHTML = rows.slice(0, count).map(function (r, i) {
+      return '<div class="prow"><span class="swatch" style="background:' + COLORS[i].c + '"></span><input data-i="' + i + '" value="' + esc(r.name) + '" maxlength="14" aria-label="Nombre del jugador ' + (i + 1) + '"><button class="toggle" data-bot="' + i + '" aria-pressed="' + !r.bot + '">' + (r.bot ? "Máquina" : "Persona") + '</button><select data-of="' + i + '" aria-label="Oficio">' + opts.replace('value="' + r.oficio + '"', 'value="' + r.oficio + '" selected') + "</select></div>";
+    }).join("");
+    $("playerRows").querySelectorAll("input").forEach(function (el) { el.oninput = function () { rows[+el.dataset.i].name = el.value; }; });
+    $("playerRows").querySelectorAll("[data-bot]").forEach(function (b) { b.onclick = function () { var r = rows[+b.dataset.bot]; r.bot = !r.bot; drawSetup(); }; });
+    $("playerRows").querySelectorAll("select").forEach(function (s) { s.onchange = function () { rows[+s.dataset.of].oficio = s.value; }; });
+  }
+  function startFromSetup() {
+    var cfg = rows.slice(0, count).map(function (r, i) { return { name: (r.name || "").trim() || DEFAULT_NAMES[i], bot: r.bot, oficio: r.oficio }; });
+    var free = shuffle(OFICIO_IDS.filter(function (o) { return !cfg.some(function (c) { return c.oficio === o; }); }));
+    cfg.forEach(function (c) { if (c.oficio === "azar") c.oficio = free.pop() || pick(OFICIO_IDS); });
+    lastCfg = cfg; lastOpts = { lago: exp.lago || count > 4 || exp.pesca, pesca: exp.pesca, senorios: exp.senorios };
+    newGame(cfg, lastOpts);
+  }
+  $("startBtn").onclick = startFromSetup;
+  $("quitBtn").onclick = function () {
+    openModal('<h2>¿Salir?</h2><p>Se pierde la partida.</p><div class="row"><button class="btn alt" id="mNo">Seguir jugando</button><button class="btn" id="mYes">Salir</button></div>');
+    $("mNo").onclick = closeModal;
+    $("mYes").onclick = function () { closeModal(); G = null; $("game").classList.add("hidden"); $("setup").classList.remove("hidden"); $("cover").classList.add("hidden"); };
+  };
+
+  makeIcons();
+  Object.keys(ICONS).forEach(function (k) { var im = new Image(); im.src = ICONS[k]; ICON_IMG[k] = im; });
+  $("costList").innerHTML = [["Camino", "calzada"], ["Vía de tren (El Tren)", "canoa"], ["Rancho (1 punto)", "aldea"], ["Pueblo (2 puntos)", "ciudad"], ["Plan (carta sorpresa)", "codice"], ["Dorado (Generales y Dorados)", "jaguar"]].map(function (c) {
+    var h = ""; RES.forEach(function (r) { for (var i = 0; i < (COST[c[1]][r] || 0); i++) h += icon(r, "ico"); });
+    return "<span>" + h + "</span><span>" + c[0] + "</span>";
+  }).join("");
+  drawSetup();
+
+  if (params.has("bots")) {
+    count = Math.min(6, Math.max(2, +params.get("bots") || 4));
+    rows.forEach(function (r) { r.bot = true; });
+    exp.lago = params.has("lago"); exp.pesca = params.has("pesca"); exp.senorios = params.has("senorios");
+    startFromSetup();
+  }
+})();
+</script>
+</body>
+</html>
